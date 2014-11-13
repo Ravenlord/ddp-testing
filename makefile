@@ -59,46 +59,15 @@ sysbench_threads	:= 8
 sysbench_max_requests	:= 0
 # Maximum amount of time the benchmark will run (seconds).
 sysbench_max_time	:= 10
-# Concatenated sysbench options common to prepare and run commands.
-sysbench_options	:= --mysql-db=$(schema_test) --mysql-user=$(sysbench_db_user) --test=
-# Concatenated sysbench options for benchmark runs
-sysbench_options_bench	:= --num-threads=$(sysbench_threads) --max-requests=$(sysbench_max_requests) --max-time=$(sysbench_max_time) $(sysbench_options)
-
-# ------------------------------------------------------------------------------
-# Functions
-# ------------------------------------------------------------------------------
-
-# TODO: move into shell script.
-define run_test
-  # Check if there's a test to run.
-  [ '$(1)' != '' ]
-
-  $(eval test_name:=$(1:.lua=))
-
-  @echo 'Starting test: $(test_name).'
-
-  @echo 'Setting up test schema ($(schema_test)).'
-  mysql -e 'DROP SCHEMA IF EXISTS `$(schema_test)`;'
-  mysql -e 'CREATE SCHEMA `$(schema_test)`;'
-
-  @echo 'Creating output directory.'
-  mkdir -p $(folder_results)/$(test_name)
-
-  @echo 'Preparing test data.'
-  sysbench $(sysbench_options)$(folder_tests)/$1 prepare
-
-  @echo 'Performing benchmark with parameters: Threads $(sysbench_threads), Maximum requests $(sysbench_max_requests), Maximum runtime $(sysbench_max_time).'
-  sysbench $(sysbench_options_bench)$(folder_tests)/$1 run > $(folder_results)/$(test_name)/benchmark.log 2>&1
-endef
 
 # ------------------------------------------------------------------------------
 # Targets
 # ------------------------------------------------------------------------------
 
-all: update install-all
+all: install-all benchmark
 
 benchmark:
-	# TODO: make shell script conducting the benchmarks.
+	./run_tests.sh -d $(folder_tests) -n $(sysbench_threads) -o $(folder_results) -r $(sysbench_max_requests) -s $(schema_test) -t $(sysbench_max_time) -x $(schema_data)
 
 clean:
 	$(purge) -y purge php5-common php5-cli php5-mysqlnd software-properties-common mariadb-server mariadb-common sysbench
@@ -107,7 +76,7 @@ clean:
 	$(refresh)
 	rm -Rf $(folder_results)
 
-install-all: install-php install-mariadb install-sysbench
+install-all: update install-php install-mariadb install-sysbench
 
 install-mariadb:
 	$(install) software-properties-common
