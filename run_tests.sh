@@ -47,8 +47,10 @@
 usage()
 {
 cat << EOT
-Usage: ${0##*/} [options]...
+Usage: ${0##*/} [options]... [tests]...
 Run sysbench tests in a specified folder.
+
+Tests: Overrides -d option. A list of .lua test files to execute.
 
 Options:
 -d Directory containing the test files, defaults to 'tests/'.
@@ -95,6 +97,8 @@ SCHEMA_DATA='data'
 SYSBENCH_OPTIONS=''
 # Sysbench schema parameter.
 SYSBENCH_SCHEMA='--mysql-db='
+# List of test files to execute.
+TESTS=''
 # Maximum time in seconds the tests will run.
 TIME=60
 # Database user for sysbench.
@@ -126,6 +130,16 @@ do
   shift $(( $OPTIND - 1 ))
 done
 
+# Welcome message.
+echo "\n${LINE}"
+echo "Starting sysbench test suite runner."
+echo "${LINE}\n"
+echo "Test suite location: ${DIR}"
+echo "Output directory: ${OUTPUT_DIR}"
+echo "Number of threads per test: ${NUM_THREADS}"
+echo "Maximum requests per test: ${REQUESTS}"
+echo "Maximum runtime per test: ${TIME}"
+
 # Prepare sysbench options.
 DIR="${DIR%/}/"
 OUTPUT_DIR="${OUTPUT_DIR%/}/"
@@ -138,15 +152,15 @@ OUTPUT_DIR="${OUTPUT_DIR%/}/"
 
 SYSBENCH_OPTIONS="${SYSBENCH_SCHEMA} ${USER} --test="
 
-# Welcome message.
-echo "\n${LINE}"
-echo "Starting sysbench test suite runner."
-echo "${LINE}\n"
-echo "Test suite location: ${DIR}"
-echo "Output directory: ${OUTPUT_DIR}"
-echo "Number of threads per test: ${NUM_THREADS}"
-echo "Maximum requests per test: ${REQUESTS}"
-echo "Maximum runtime per test: ${TIME}"
+# Prepare test case names. If we have arguments, interpret them as test cases to execute.
+# Otherwise, take test cases from test directory.
+if [ $# -gt 0 ]; then
+  # We have arguments, just put them into the tests "array".
+  TESTS=$@
+else
+  # Obtain the tests list from the test directory with their correct path.
+  TESTS=$(ls "${DIR}" | sed -e "s#^#${DIR}#")
+fi
 
 # Check if test suite provisioning file exists and execute the prepare step.
 if [ -f "${DIR}provision.lua" ]; then
@@ -157,10 +171,11 @@ if [ -f "${DIR}provision.lua" ]; then
   sysbench ${SYSBENCH_OPTIONS}${DIR}provision.lua prepare > /dev/null 2>&1
 fi
 
-# Process all tests in the test directory.
-for TEST in $(ls ${DIR})
+# Process all tests specified either from directory or arguments.
+for TEST in ${TESTS}
 do
-  if [ ${TEST} != 'common.lua' -a ${TEST} != 'provision.lua' ]; then
+  TEST_NAME=$(basename ${TEST})
+  if [ ${TEST_NAME} != 'common.lua' -a ${TEST_NAME} != '${DIR}provision.lua' ]; then
     echo "\n${LINE}"
     echo ${TEST}
     echo "${LINE}\n"
@@ -168,13 +183,13 @@ do
     echo "Creating test schema: ${SCHEMA}"
     mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA IF NOT EXISTS ${SCHEMA};"
     echo "Preparing benchmark"
-    sysbench ${SYSBENCH_OPTIONS}${DIR}${TEST} prepare > /dev/null 2>&1
-    mkdir -p ${OUTPUT_DIR}${TEST}
+    sysbench ${SYSBENCH_OPTIONS}${TEST} prepare > /dev/null 2>&1
+    mkdir -p ${OUTPUT_DIR}${TEST_NAME}
     echo "Restarting MySQL server"
     # TODO: add parameters to disable caching.
     service mysql restart
     echo "Running benchmark"
-    sysbench ${NUM_THREADS} ${REQUESTS} ${TIME} ${SYSBENCH_OPTIONS}${DIR}${TEST} run > ${OUTPUT_DIR}${TEST}/benchmark.log 2>&1
+    sysbench ${NUM_THREADS} ${REQUESTS} ${TIME} ${SYSBENCH_OPTIONS}${TEST} run > ${OUTPUT_DIR}${TEST_NAME}/benchmark.log 2>&1
     echo "Cleaning up test schema: ${SCHEMA}"
     mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
     echo "Completed test: ${TEST}"
@@ -185,6 +200,9 @@ echo "\n${LINE}"
 echo "Test suite completed."
 echo "${LINE}\n"
 
-echo "Cleaning up test data schema: ${SCHEMA_DATA}"
-mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
+# Only clean up data schema if it was created by the test runner.
+if [ -f "${DIR}provision.lua" ]; then
+  echo "Cleaning up test data schema: ${SCHEMA_DATA}"
+  mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
+fi
 echo "Success, all done!\n"
