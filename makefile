@@ -70,24 +70,22 @@ benchmark:
 	./run_tests.sh -d $(folder_tests) -n $(sysbench_threads) -o $(folder_results) -r $(sysbench_max_requests) -s $(schema_test) -t $(sysbench_max_time) -x $(schema_data)
 
 clean:
-	$(purge) -y purge php5-common php5-cli php5-mysqlnd software-properties-common mariadb-server mariadb-common sysbench
+	$(purge) -y purge software-properties-common mariadb-server mariadb-common sysbench
 	rm -f /etc/apt/sources.list.d/mariadb.list
 	rm -f /etc/apt/sources.list.d/percona.list
 	$(refresh)
 	rm -Rf $(folder_results)
 
-install-all: update install-php install-mariadb install-sysbench
+install-all: update install-mariadb install-sysbench
 
+# https://downloads.mariadb.org/mariadb/repositories/#mirror=tweedo&distro=Debian&distro_release=wheezy&version=10.1
 install-mariadb:
 	$(install) software-properties-common
-	apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
+	apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
 	cp package-repositories/mariadb.list /etc/apt/sources.list.d/
 	chmod 644 /etc/apt/sources.list.d/mariadb.list
 	$(refresh)
 	$(install) mariadb-server
-
-install-php:
-	$(install) php5-common php5-cli php5-mysqlnd
 
 # http://www.ubuntuupdates.org/ppa/percona_server_with_xtradb?dist=trusty
 install-sysbench:
