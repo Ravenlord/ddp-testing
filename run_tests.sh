@@ -166,9 +166,10 @@ fi
 if [ -f "${DIR}provision.lua" ]; then
   echo "Found provisioning file 'provision.lua', starting test suite preparations."
   echo "Creating test data schema: ${SCHEMA_DATA}"
-  mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA IF NOT EXISTS ${SCHEMA_DATA};"
+  mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
+  mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA_DATA};"
   echo "Preparing test data"
-  sysbench ${SYSBENCH_OPTIONS}${DIR}provision.lua prepare > /dev/null 2>&1
+  sysbench --mysql-db=${SCHEMA_DATA} ${USER} --test=${DIR}provision.lua prepare > /dev/null 2>&1
 fi
 
 # Process all tests specified either from directory or arguments.
@@ -181,7 +182,8 @@ do
     echo "${LINE}\n"
     echo "Starting test: ${TEST}"
     echo "Creating test schema: ${SCHEMA}"
-    mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA IF NOT EXISTS ${SCHEMA};"
+    mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
+    mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA};"
     echo "Preparing benchmark"
     sysbench ${SYSBENCH_OPTIONS}${TEST} prepare > /dev/null 2>&1
     mkdir -p ${OUTPUT_DIR}${TEST_NAME}
