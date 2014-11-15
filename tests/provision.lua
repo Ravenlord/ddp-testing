@@ -22,7 +22,7 @@ function prepare()
   -- Create table for last names.
   query = [[
 CREATE TABLE `last_names` (
-  `last_name` VARCHAR(20) PRIMARY KEY
+  `last_name` VARCHAR(255) PRIMARY KEY
 )
 ]]
   db_query(query)
@@ -41,10 +41,10 @@ CREATE TABLE `last_names` (
   fh:close()
   db_bulk_insert_done()
   
-    -- Create table for first names.
+  -- Create table for first names.
   query = [[
 CREATE TABLE `first_names` (
-  `first_name` VARCHAR(20) PRIMARY KEY
+  `first_name` VARCHAR(255) PRIMARY KEY
 )
 ]]
   db_query(query)
@@ -62,6 +62,25 @@ CREATE TABLE `first_names` (
   end
   fh:close()
   db_bulk_insert_done()
+  
+  -- Create table for person names.
+  query = [[
+CREATE TABLE `names` (
+  `name` VARCHAR(255) PRIMARY KEY
+)
+]]
+  db_query(query)
+  -- Insert person names as permutations of first and last names.
+  query = [[
+INSERT INTO `names`
+	SELECT CONCAT_WS(' ', `fn`.`first_name`, `ln`.`last_name`)
+	FROM `last_names` AS `ln`
+    CROSS JOIN `first_names` AS `fn`
+]]
+  db_query(query)
+  -- Drop first and last name tables.
+  db_query('DROP TABLE `last_names`')
+  db_query('DROP TABLE `first_names`')
   
   -- Create table for integers.
   query = [[
