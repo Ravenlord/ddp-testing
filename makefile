@@ -57,8 +57,8 @@ sysbench_db_user	:= root
 sysbench_threads	:= 8
 # Maximum number of requests performed by sysbench (0 = unlimited).
 sysbench_max_requests	:= 0
-# Maximum amount of time the benchmark will run (seconds).
-sysbench_max_time	:= 10
+# Maximum amount of time a single benchmark will run (seconds).
+sysbench_max_time	:= 1
 
 # ------------------------------------------------------------------------------
 # Targets
