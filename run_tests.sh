@@ -87,6 +87,8 @@ NUM_THREADS=8
 OUTPUT_DIR='results/'
 # Database password for sysbench.
 PASS=''
+# Execute provisioning step and cleanup or not.
+PROVISION=true
 # Maximum number of requests performed by sysbench.
 REQUESTS=0
 # Database schema used for tests.
@@ -150,7 +152,7 @@ OUTPUT_DIR="${OUTPUT_DIR%/}/"
 [ -n "${TIME}" ] && TIME="--max-time=${TIME}"
 [ -n "${USER}" ] && MYSQL_USER=" -u ${USER}" && USER="--mysql-user=${USER}"
 
-SYSBENCH_OPTIONS="${SYSBENCH_SCHEMA} ${USER} --test="
+SYSBENCH_OPTIONS="${SYSBENCH_SCHEMA} ${USER} --mysql-socket=/var/run/mysqld/mysqld.sock --test="
 
 # Prepare test case names. If we have arguments, interpret them as test cases to execute.
 # Otherwise, take test cases from test directory.
@@ -163,13 +165,13 @@ else
 fi
 
 # Check if test suite provisioning file exists and execute the prepare step.
-if [ -f "${DIR}provision.lua" ]; then
+if [ PROVISION = true -a -f "${DIR}provision.lua" ]; then
   echo "Found provisioning file 'provision.lua', starting test suite preparations."
   echo "Creating test data schema: ${SCHEMA_DATA}"
   mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
   mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA_DATA};"
   echo "Preparing test data"
-  sysbench --mysql-db=${SCHEMA_DATA} ${USER} --test=${DIR}provision.lua prepare > /dev/null 2>&1
+  sysbench --mysql-db=${SCHEMA_DATA} ${USER} --mysql-socket=/var/run/mysqld/mysqld.sock --test=${DIR}provision.lua prepare > /dev/null 2>&1
 fi
 
 # Process all tests specified either from directory or arguments.
@@ -203,7 +205,7 @@ echo "Test suite completed."
 echo "${LINE}\n"
 
 # Only clean up data schema if it was created by the test runner.
-if [ -f "${DIR}provision.lua" ]; then
+if [ PROVISION = true -a -f "${DIR}provision.lua" ]; then
   echo "Cleaning up test data schema: ${SCHEMA_DATA}"
   mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
 fi
