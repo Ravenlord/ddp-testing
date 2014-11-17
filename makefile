@@ -43,6 +43,10 @@ purge			:= $(package_manager) purge
 refresh			:= $(package_manager) update
 update			:= $(package_manager) upgrade
 
+# RAM size in kB.
+memory_size		:= $(shell cat /proc/meminfo | grep -i memtotal | tr -s ' ' | cut -d' ' -f2)
+# InnoDB buffer pool size, approx. 75% of RAM size.
+innodb_buffer_size	:= $(shell echo 'scale=0; $(memory_size) / 4 * 3' | bc)
 # Output folder for the benchmark logs.
 folder_results		:= results
 # Folder containing the Lua test files for sysbench.
@@ -86,6 +90,8 @@ install-mariadb:
 	chmod 644 /etc/apt/sources.list.d/mariadb.list
 	$(refresh)
 	$(install) mariadb-server
+	cp config/my.cnf /etc/mysql/my.cnf
+	service mysql restart
 
 # http://www.ubuntuupdates.org/ppa/percona_server_with_xtradb?dist=trusty
 install-sysbench:
