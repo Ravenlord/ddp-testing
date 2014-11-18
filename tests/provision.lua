@@ -18,11 +18,12 @@ end
 -- Create test data tables and populate them with data.
 function prepare()
   local err, fh, line, numeric, query, stringi
-  
+
   -- Create table for last names.
   query = [[
 CREATE TABLE `last_names` (
-  `last_name` VARCHAR(255) PRIMARY KEY
+  `id` INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `last_name` VARCHAR(255)
 )
 ]]
   db_query(query)
@@ -31,7 +32,7 @@ CREATE TABLE `last_names` (
   if fh == nil then
     print('Error opening file: ' .. err)
   end
-  
+
   line = fh:read()
   db_bulk_insert_init('INSERT INTO `last_names`(`last_name`) VALUES')
   while line ~= nil do
@@ -40,11 +41,12 @@ CREATE TABLE `last_names` (
   end
   fh:close()
   db_bulk_insert_done()
-  
+
   -- Create table for first names.
   query = [[
 CREATE TABLE `first_names` (
-  `first_name` VARCHAR(255) PRIMARY KEY
+  `id` INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `first_name` VARCHAR(255)
 )
 ]]
   db_query(query)
@@ -53,7 +55,7 @@ CREATE TABLE `first_names` (
   if fh == nil then
     print('Error opening file: ' .. err)
   end
-  
+
   line = fh:read()
   db_bulk_insert_init('INSERT INTO `first_names`(`first_name`) VALUES')
   while line ~= nil do
@@ -62,26 +64,36 @@ CREATE TABLE `first_names` (
   end
   fh:close()
   db_bulk_insert_done()
-  
+
   -- Create table for person names.
   query = [[
 CREATE TABLE `names` (
-  `name` VARCHAR(255) PRIMARY KEY
+  `id` INTEGER UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `first_name` VARCHAR(255),
+  `last_name` VARCHAR(255),
+  `name` VARCHAR(255)
 )
 ]]
   db_query(query)
-  -- Insert person names as permutations of first and last names.
+
+  -- Insert 10 million person names as pseudo-random permutations of first and last names.
   query = [[
-INSERT INTO `names`
-	SELECT CONCAT_WS(' ', `fn`.`first_name`, `ln`.`last_name`)
-	FROM `last_names` AS `ln`
-    CROSS JOIN `first_names` AS `fn`
+INSERT INTO `names` (`first_name`, `last_name`, `name`)
+	SELECT `fn`.`first_name`, `ln`.`last_name`, CONCAT_WS(' ', `fn`.`first_name`, `ln`.`last_name`)
+	  FROM (
+	    SELECT DISTINCT `last_name` FROM `last_names` ORDER BY RAND() LIMIT 50000
+	  ) AS `ln`
+	   CROSS JOIN
+	  (
+	    SELECT DISTINCT `first_name` FROM `first_names` ORDER BY RAND() LIMIT 200
+	  ) AS `fn`
 ]]
   db_query(query)
+
   -- Drop first and last name tables.
   db_query('DROP TABLE `last_names`')
   db_query('DROP TABLE `first_names`')
-  
+
   -- Create table for integers.
   query = [[
 CREATE TABLE `integers` (
@@ -95,7 +107,7 @@ CREATE TABLE `integers` (
     db_bulk_insert_next('(' .. i .. ')')
   end
   db_bulk_insert_done()
-  
+
   -- Create table for numeric (fixed point) numbers.
   query = [[
 CREATE TABLE `numerics` (

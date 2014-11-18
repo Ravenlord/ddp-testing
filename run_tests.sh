@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 # ------------------------------------------------------------------------------
 # This is free and unencumbered software released into the public domain.
@@ -161,11 +161,12 @@ if [ $# -gt 0 ]; then
   TESTS=$@
 else
   # Obtain the tests list from the test directory with their correct path.
-  TESTS=$(ls "${DIR}" | sed -e "s#^#${DIR}#")
+  TESTS=$(ls ${DIR}*.lua)
+  PROVISION=true
 fi
 
 # Check if test suite provisioning file exists and execute the prepare step.
-if [ PROVISION = true -a -f "${DIR}provision.lua" ]; then
+if [ ${PROVISION} = true -a -f "${DIR}provision.lua" ]; then
   echo "Found provisioning file 'provision.lua', starting test suite preparations."
   echo "Creating test data schema: ${SCHEMA_DATA}"
   mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
@@ -178,7 +179,7 @@ fi
 for TEST in ${TESTS}
 do
   TEST_NAME=$(basename ${TEST})
-  if [ ${TEST_NAME} != 'common.lua' -a ${TEST_NAME} != '${DIR}provision.lua' ]; then
+  if [ ${TEST_NAME} != 'common.lua' -a ${TEST_NAME} != 'provision.lua' ]; then
     echo "\n${LINE}"
     echo ${TEST}
     echo "${LINE}\n"
@@ -190,7 +191,6 @@ do
     sysbench ${SYSBENCH_OPTIONS}${TEST} prepare > /dev/null 2>&1
     mkdir -p ${OUTPUT_DIR}${TEST_NAME}
     echo "Restarting MySQL server"
-    # TODO: add parameters to disable caching.
     service mysql restart
     echo "Running benchmark"
     sysbench ${NUM_THREADS} ${REQUESTS} ${TIME} ${SYSBENCH_OPTIONS}${TEST} run > ${OUTPUT_DIR}${TEST_NAME}/benchmark.log 2>&1
@@ -205,7 +205,7 @@ echo "Test suite completed."
 echo "${LINE}\n"
 
 # Only clean up data schema if it was created by the test runner.
-if [ PROVISION = true -a -f "${DIR}provision.lua" ]; then
+if [ ${PROVISION} = true -a -f "${DIR}provision.lua" ]; then
   echo "Cleaning up test data schema: ${SCHEMA_DATA}"
   mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
 fi
