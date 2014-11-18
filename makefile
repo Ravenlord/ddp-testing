@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # ------------------------------------------------------------------------------
 # This is free and unencumbered software released into the public domain.
 #
@@ -90,7 +92,7 @@ install-mariadb:
 	chmod 644 /etc/apt/sources.list.d/mariadb.list
 	$(refresh)
 	$(install) mariadb-server
-	cp config/my.cnf /etc/mysql/my.cnf
+	sed -e 's/##INNODB_BUFFER_POOL_SIZE##/$(innodb_buffer_size)k/' config/my.cnf > /etc/mysql/my.cnf
 	service mysql restart
 
 # http://www.ubuntuupdates.org/ppa/percona_server_with_xtradb?dist=trusty
