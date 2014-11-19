@@ -88,7 +88,7 @@ OUTPUT_DIR='results/'
 # Database password for sysbench.
 PASS=''
 # Execute provisioning step and cleanup or not.
-PROVISION=true
+PROVISION=false
 # Maximum number of requests performed by sysbench.
 REQUESTS=0
 # Database schema used for tests.
