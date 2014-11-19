@@ -28,7 +28,7 @@
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# Makefile for automated provisioning and test runs.
+# Makefile for automated provisioning and test runs on Debian-based systems.
 #
 # AUTHOR: Markus Deutschl <deutschl.markus@gmail.com>
 # COPYRIGHT: Copyright (c) 2014 Markus Deutschl
@@ -70,20 +70,26 @@ sysbench_max_time	:= 1
 # Targets
 # ------------------------------------------------------------------------------
 
+# Default: Install prerequisites and run benchmarks.
 all: install-all benchmark
 
+# Run all the benchmarks
 benchmark:
 	./run_tests.sh -d $(folder_tests) -n $(sysbench_threads) -o $(folder_results) -r $(sysbench_max_requests) -s $(schema_test) -t $(sysbench_max_time) -x $(schema_data)
 
+# Uninstall everything and tidy up.
 clean:
-	$(purge) -y purge software-properties-common mariadb-server mariadb-common sysbench
+	$(purge) software-properties-common mariadb-server mariadb-common sysbench
 	rm -f /etc/apt/sources.list.d/mariadb.list
 	rm -f /etc/apt/sources.list.d/percona.list
 	$(refresh)
 	rm -Rf $(folder_results)
 
+# Install all prerequisites.
 install-all: update install-mariadb install-sysbench
 
+# Unattended MariaDB installation.
+# http://stackoverflow.com/questions/7739645/install-mysql-on-ubuntu-without-password-prompt
 # https://downloads.mariadb.org/mariadb/repositories/#mirror=tweedo&distro=Debian&distro_release=wheezy&version=10.1
 install-mariadb:
 	$(install) software-properties-common
@@ -91,10 +97,13 @@ install-mariadb:
 	cp package-repositories/mariadb.list /etc/apt/sources.list.d/
 	chmod 644 /etc/apt/sources.list.d/mariadb.list
 	$(refresh)
+	echo 'mariadb-server	mysql-server/root_password	password  ' | debconf-set-selections
+	echo 'mariadb-server	mysql-server/root_password_again	password  ' | debconf-set-selections
 	$(install) mariadb-server
-	sed -e 's/##INNODB_BUFFER_POOL_SIZE##/$(innodb_buffer_size)k/' config/my.cnf > /etc/mysql/my.cnf
+	sed -e 's/##INNODB_BUFFER_POOL_SIZE##/$(innodb_buffer_size)k/' config/my.ini > /etc/mysql/my.cnf
 	service mysql restart
 
+# Sysbench installation.
 # http://www.ubuntuupdates.org/ppa/percona_server_with_xtradb?dist=trusty
 install-sysbench:
 	gpg --keyserver  hkp://keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A
@@ -104,6 +113,7 @@ install-sysbench:
 	$(refresh)
 	$(install) sysbench
 
+# Update the operating system and pre-installed packages.
 update:
 	$(refresh)
 	$(update)
