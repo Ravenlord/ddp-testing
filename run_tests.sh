@@ -99,6 +99,8 @@ SCHEMA_DATA='data'
 SYSBENCH_OPTIONS=''
 # Sysbench schema parameter.
 SYSBENCH_SCHEMA='--mysql-db='
+# Sysbench data schema parameter.
+SYSBENCH_SCHEMA_DATA='--schema-data='
 # List of test files to execute.
 TESTS=''
 # Maximum time in seconds the tests will run.
@@ -151,18 +153,21 @@ OUTPUT_DIR="${OUTPUT_DIR%/}/"
 [ -n "${SCHEMA}" ] && SYSBENCH_SCHEMA="${SYSBENCH_SCHEMA}${SCHEMA}"
 [ -n "${TIME}" ] && TIME="--max-time=${TIME}"
 [ -n "${USER}" ] && MYSQL_USER=" -u ${USER}" && USER="--mysql-user=${USER}"
+[ -n "${SCHEMA_DATA}" ] && SYSBENCH_SCHEMA_DATA="${SYSBENCH_SCHEMA_DATA}${SCHEMA_DATA}"
 
-SYSBENCH_OPTIONS="${SYSBENCH_SCHEMA} ${USER} --mysql-socket=/var/run/mysqld/mysqld.sock --test="
+SYSBENCH_OPTIONS="${SYSBENCH_SCHEMA} ${SYSBENCH_SCHEMA_DATA} ${USER} --mysql-socket=/var/run/mysqld/mysqld.sock --test="
 
 # Prepare test case names. If we have arguments, interpret them as test cases to execute.
 # Otherwise, take test cases from test directory.
 if [ $# -gt 0 ]; then
   # We have arguments, just put them into the tests "array".
   TESTS=$@
+  echo "Found argument(s), entering single test mode."
 else
   # Obtain the tests list from the test directory with their correct path.
   TESTS=$(ls ${DIR}*.lua)
   PROVISION=true
+  echo "No arguments specified, entering bulk mode with provisioning."
 fi
 
 # Check if test suite provisioning file exists and execute the prepare step.
@@ -171,8 +176,10 @@ if [ ${PROVISION} = true -a -f "${DIR}provision.lua" ]; then
   echo "Creating test data schema: ${SCHEMA_DATA}"
   mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
   mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA_DATA};"
+  # This is needed for convenience.
+  mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA IF NOT EXISTS ${SCHEMA};"
   echo "Preparing test data"
-  sysbench --mysql-db=${SCHEMA_DATA} ${USER} --mysql-socket=/var/run/mysqld/mysqld.sock --test=${DIR}provision.lua prepare > /dev/null 2>&1
+  sysbench ${SYSBENCH_OPTIONS}${DIR}provision.lua prepare > /dev/null 2>&1
 fi
 
 # Process all tests specified either from directory or arguments.
