@@ -114,7 +114,7 @@ CREATE TABLE `]] .. name .. [[` (
 )
 ]]
   db_query(query)
-  -- Insert the images, 20% of the rows will have NULL values.
+  -- Insert the file paths, 20% of the rows will have NULL values.
   db_bulk_insert_init('INSERT INTO `'.. name .. '` (`path`) VALUES')
   for i = 1, number do
     if i % 5 == 0 then
@@ -228,6 +228,28 @@ INSERT INTO `]] .. name .. [[` (`base_salary`, `bonus`, `tax_rate`)
     ) AS `num2`
 ]]
   db_query(query)
+end
+
+--- Prepare a table for textual descriptions.
+-- @param name     The name of the table.
+-- @param number   Defines how many rows will be generated.
+-- @param path     The path to the text file.
+function prepare_texts(name, number, path)
+  local query, text
+  query = [[
+CREATE TABLE `]] .. name .. [[` (
+  `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `text` MEDIUMTEXT NOT NULL
+)
+]]
+  db_query(query)
+  -- Insert the texts.
+  text = "LOAD_FILE('" .. path .. "')"
+  db_bulk_insert_init('INSERT INTO `'.. name .. '` (`text`) VALUES')
+  for i = 1, number do
+    db_bulk_insert_next("(" .. text .. ")")
+  end
+  db_bulk_insert_done()
 end
 
 --- Set variables provided on the command line.
