@@ -1,29 +1,47 @@
+--[[!
+ - This is free and unencumbered software released into the public domain.
+ -
+ - Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form
+ - or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.
+ -
+ - In jurisdictions that recognize copyright laws, the author or authors of this software dedicate any and all copyright
+ - interest in the software to the public domain. We make this dedication for the benefit of the public at large and to
+ - the detriment of our heirs and successors. We intend this dedication to be an overt act of relinquishment in
+ - perpetuity of all present and future rights to this software under copyright law.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ - WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE
+ - LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ - OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ -
+ - For more information, please refer to <http://unlicense.org/>
+--]]
+
+--[[
+ - Benchmark provisioning file for the whole test suite.
+ -
+ - @author Markus Deutschl <deutschl.markus@gmail.com>
+ - @copyright 2014 Markus Deutschl
+ - @license http://unlicense.org/ Unlicense
+--]]
+
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "common.lua")
 
--- Dummy function to prevent errors if this file is accidentally run as test.
-function thread_init(thread_id)
-  return 0
-end
-
--- Dummy function to prevent errors if this file is accidentally run as test.
+--- Execute the benchmark queries.
+--  Is called during the run command of sysbench.
+--  Dummy implementation to prevent actual benchmark run of this script.
 function event(thread_id)
   return 0
 end
 
--- Dummy function to prevent errors if this file is accidentally run as cleanup task.
-function cleanup()
-  return 0
-end
-
--- Create test data tables and populate them with data.
-function prepare()
+--- Prepare data for the benchmark.
+--  Is called during the prepare command of sysbench in common.lua.
+--  Sets up commonly used random data for the benchmarks in the data schema.
+function prepare_data()
   set_vars()
   local end_date, err, fh, line, numeric, query, start_date, stringi
-
-  time = os.date("*t")
-  print(("%02d:%02d:%02d"):format(time.hour, time.min, time.sec) .. ' - Preparing test data')
 
   -- Create table for last names.
   query = [[
@@ -161,6 +179,4 @@ CREATE TABLE `]] .. schema_data ..[[`.`dates` (
     db_bulk_insert_next("(NOW() - INTERVAL " .. sb_rand_uniform(start_date, end_date) .. " DAY)")
   end
   db_bulk_insert_done()
-  time = os.date("*t")
-  print(("%02d:%02d:%02d"):format(time.hour, time.min, time.sec) .. ' - Done')
 end
