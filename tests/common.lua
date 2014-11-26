@@ -1,3 +1,30 @@
+--[[!
+ - This is free and unencumbered software released into the public domain.
+ -
+ - Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form
+ - or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.
+ -
+ - In jurisdictions that recognize copyright laws, the author or authors of this software dedicate any and all copyright
+ - interest in the software to the public domain. We make this dedication for the benefit of the public at large and to
+ - the detriment of our heirs and successors. We intend this dedication to be an overt act of relinquishment in
+ - perpetuity of all present and future rights to this software under copyright law.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ - WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE
+ - LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ - OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ -
+ - For more information, please refer to <http://unlicense.org/>
+--]]
+
+--[[
+ - Common, reusable functions for the benchmarks.
+ -
+ - @author Markus Deutschl <deutschl.markus@gmail.com>
+ - @copyright 2014 Markus Deutschl
+ - @license http://unlicense.org/ Unlicense
+--]]
+
 -- Global array for easy access.
 departments = {
    'Accounting',
@@ -11,6 +38,13 @@ departments = {
    'Research and Development',
    'Sales'
 }
+
+--- Clean up all resources used by the benchmark.
+--  Is called during the cleanup command of sysbench.
+--  Dummy implementation, due to schema drop after every benchmark run.
+function cleanup()
+  return 0
+end
 
 --- Drop a database table.
 -- @param name  The table name to drop.
@@ -27,6 +61,24 @@ function prepare()
   prepare_data()
   time = os.date("*t")
   print(("%02d:%02d:%02d"):format(time.hour, time.min, time.sec) .. ' - Preparation complete')
+end
+
+--- Prepare a table with dates.
+-- @param name     The name of the table.
+-- @param number   Defines how many dates will be generated.
+function prepare_dates(name, number)
+  local query
+  query = [[
+CREATE TABLE `]] .. name .. [[` (
+  `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `date` DATE NOT NULL
+)
+]]
+  db_query(query)
+  query = [[
+INSERT INTO `]] .. name .. [[` (`date`)
+  SELECT `date` FROM `]] .. schema_data .. [[`.`dates` ORDER BY RAND() LIMIT ]] .. number
+  db_query(query)
 end
 
 --- Prepare a table with department names randomly distributed (uniform).
@@ -50,6 +102,37 @@ CREATE TABLE `]] .. name .. [[` (
    db_bulk_insert_done()
 end
 
+--- Prepare a table for file paths with 80% paths present.
+-- @param name     The name of the table.
+-- @param number   Defines how many rows will be generated.
+function prepare_file_paths(name, number)
+  local path_value, query, random_max, random_string
+  query = [[
+CREATE TABLE `]] .. name .. [[` (
+  `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `path` VARCHAR(255)
+)
+]]
+  db_query(query)
+  -- Insert the images, 20% of the rows will have NULL values.
+  db_bulk_insert_init('INSERT INTO `'.. name .. '` (`path`) VALUES')
+  for i = 1, number do
+    if i % 5 == 0 then
+      path_value = 'NULL'
+    else
+      -- File name of variable length.
+      random_max    = sb_rand_uniform(5,239)
+      random_string = ''
+      for j = 1, random_max do
+        random_string = random_string .. '#'
+      end
+      path_value = sb_rand_str('/tmp/images/' .. random_string .. '.png')
+    end
+    db_bulk_insert_next("('" .. path_value .. "')")
+  end
+  db_bulk_insert_done()
+end
+
 --- Prepare a table for images with 80% images present.
 -- @param name     The name of the table.
 -- @param number   Defines how many rows will be generated.
@@ -58,40 +141,41 @@ function prepare_images(name, number, path)
   local image, image_value, query
   query = [[
 CREATE TABLE `]] .. name .. [[` (
-  `id` INTEGER UNSIGNED PRIMARY KEY,
+  `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `image` MEDIUMBLOB
 )
 ]]
   db_query(query)
   -- Insert the images, 20% of the rows will have NULL values.
   image = "LOAD_FILE('" .. path .. "')"
-  db_bulk_insert_init('INSERT INTO `'.. name .. '` (`id`, `image`) VALUES')
+  db_bulk_insert_init('INSERT INTO `'.. name .. '` (`image`) VALUES')
   for i = 1, number do
     if i % 5 == 0 then
       image_value = 'NULL'
     else
       image_value = image
     end
-    db_bulk_insert_next("(" .. i .. ", " .. image_value .. ")")
+    db_bulk_insert_next("(" .. image_value .. ")")
   end
   db_bulk_insert_done()
 end
 
---- Prepare a table with person names.
+--- Prepare a table with person names and email addresses.
 -- @param name     The name of the table.
--- @param number   Defines how many names will be generated.
+-- @param number   Defines how many rows will be generated.
 function prepare_person_names(name, number)
   local query
   query = [[
 CREATE TABLE `]] .. name .. [[` (
   `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `name` VARCHAR(255) NOT NULL
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL
 )
 ]]
   db_query(query)
   query = [[
-INSERT INTO `]] .. name .. [[` (`name`)
-  SELECT DISTINCT `name` FROM `]] .. schema_data .. [[`.`names` LIMIT ]] .. number
+INSERT INTO `]] .. name .. [[` (`name`, `email`)
+  SELECT DISTINCT `name`, `email` FROM `]] .. schema_data .. [[`.`names` LIMIT ]] .. number
   db_query(query)
 end
 
