@@ -75,8 +75,10 @@ all: install-all benchmark
 
 # Run all the benchmarks
 benchmark:
-	cp tests/image.png /tmp/
+	cp assets/image.png /tmp/
 	chmod 777 /tmp/image.png
+	cp assets/description.txt /tmp/
+	chmod 777 /tmp/description.txt
 	./run_tests.sh -d $(folder_tests) -n $(sysbench_threads) -o $(folder_results) -r $(sysbench_max_requests) -s $(schema_test) -t $(sysbench_max_time) -x $(schema_data)
 
 # Uninstall everything and tidy up.
