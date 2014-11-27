@@ -39,6 +39,40 @@
 # Functions
 # ------------------------------------------------------------------------------
 
+# Run a benchmark.
+#
+# RETURN:
+# 0 - Run successful.
+# 1 - Run failed.
+run_test()
+{
+  if [ -z "$1" ]; then
+    echo 'No test specified.'
+    return 1
+  fi
+  if [ -z "$2" ]; then
+    echo 'No test mode specified.'
+    return 1
+  fi
+
+  TEST_NAME=$(basename $1)
+  echo "Starting $2 test: $1"
+  echo "Creating test schema: ${SCHEMA}"
+  mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
+  mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA};"
+  echo "Preparing benchmark"
+  sysbench ${SYSBENCH_OPTIONS}$1 prepare > /dev/null 2>&1
+  mkdir -p ${OUTPUT_DIR}${TEST_NAME}
+  echo "Restarting MySQL server"
+  service mysql restart
+  echo "Running benchmark"
+  sysbench ${NUM_THREADS} ${REQUESTS} ${TIME} ${SYSBENCH_OPTIONS}$1 --sql-mode=$2 run > ${OUTPUT_DIR}${TEST_NAME}/benchmark_$2.log 2>&1
+  echo "Cleaning up test schema: ${SCHEMA}"
+  mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
+  echo "Completed $2 test: $1\n"
+}
+
+
 # Print usage information.
 #
 # RETURN:
@@ -46,7 +80,7 @@
 # 1 - Printing failed.
 usage()
 {
-cat << EOT
+  cat << EOT
 Usage: ${0##*/} [options]... [tests]...
 Run sysbench tests in a specified folder.
 
@@ -190,20 +224,10 @@ do
     echo "\n${LINE}"
     echo ${TEST}
     echo "${LINE}\n"
-    echo "Starting test: ${TEST}"
-    echo "Creating test schema: ${SCHEMA}"
-    mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
-    mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA};"
-    echo "Preparing benchmark"
-    sysbench ${SYSBENCH_OPTIONS}${TEST} prepare > /dev/null 2>&1
-    mkdir -p ${OUTPUT_DIR}${TEST_NAME}
-    echo "Restarting MySQL server"
-    service mysql restart
-    echo "Running benchmark"
-    sysbench ${NUM_THREADS} ${REQUESTS} ${TIME} ${SYSBENCH_OPTIONS}${TEST} run > ${OUTPUT_DIR}${TEST_NAME}/benchmark.log 2>&1
-    echo "Cleaning up test schema: ${SCHEMA}"
-    mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
-    echo "Completed test: ${TEST}"
+    run_test ${TEST} 'select'
+    run_test ${TEST} 'insert'
+    run_test ${TEST} 'update'
+    run_test ${TEST} 'delete'
   fi
 done
 
