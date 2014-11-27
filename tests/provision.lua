@@ -25,9 +25,17 @@
  - @license http://unlicense.org/ Unlicense
 --]]
 
+
+-- --------------------------------------------------------------------------------------------------------------------- Includes
+
+
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "common.lua")
+
+
+-- --------------------------------------------------------------------------------------------------------------------- Preparation functions
+
 
 --- Execute the benchmark queries.
 --  Is called during the run command of sysbench.

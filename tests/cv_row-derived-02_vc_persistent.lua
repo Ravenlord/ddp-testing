@@ -25,10 +25,18 @@
  - @license http://unlicense.org/ Unlicense
 --]]
 
+
+-- --------------------------------------------------------------------------------------------------------------------- Includes
+
+
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "common.lua")
 dofile(pathtest .. "cv_row-derived-01_trivial.lua")
+
+
+-- --------------------------------------------------------------------------------------------------------------------- Preparation functions
+
 
 --- Prepare data for the benchmark.
 -- Is called during the prepare command of sysbench in common.lua.
@@ -46,8 +54,36 @@ ALTER TABLE `products`
   db_query(query)
 end
 
---- Execute the benchmark queries.
+
+-- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
+
+
+--- Execute the delete benchmark queries.
 -- Is called during the run command of sysbench.
-function event(thread_id)
+function benchmark_delete()
+  -- @todo Implement delete benchmark.
+end
+
+--- Execute the insert benchmark queries.
+-- Is called during the run command of sysbench.
+function benchmark_insert()
+  -- @todo Implement insert benchmark.
+end
+
+--- Execute the select benchmark queries.
+-- Is called during the run command of sysbench.
+function benchmark_select()
   rs = db_query('SELECT * FROM `products` WHERE `id` = ' .. sb_rand_uniform(1, 10000))
 end
+
+--- Execute the update benchmark queries.
+-- Is called during the run command of sysbench.
+function benchmark_update()
+  -- @todo Implement update benchmark.
+end
+
+
+-- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
+
+
+dofile(pathtest .. "post_setup.lua")

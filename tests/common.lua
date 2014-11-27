@@ -265,6 +265,7 @@ function set_vars()
    oltp_index_updates = oltp_index_updates or 1
    oltp_non_index_updates = oltp_non_index_updates or 1
    schema_data = schema_data or "data"
+   sql_mode = sql_mode or "select"
 
    if (oltp_auto_inc == 'off') then
       oltp_auto_inc = false
@@ -289,4 +290,16 @@ end
 --- Initialize benchmark threads.
 function thread_init(thread_id)
   set_vars()
+  local benchmark = sql_functions[sql_mode]
+  if benchmark == nil then
+    print('Unknown SQL mode, aborting...')
+    error()
+  end
+end
+
+--- Execute the benchmark queries according to the SQL mode.
+-- Is called during the run command of sysbench.
+function event(thread_id)
+  local benchmark = sql_functions[sql_mode]
+  benchmark()
 end

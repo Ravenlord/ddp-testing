@@ -186,7 +186,7 @@ fi
 for TEST in ${TESTS}
 do
   TEST_NAME=$(basename ${TEST})
-  if [ ${TEST_NAME} != 'common.lua' -a ${TEST_NAME} != 'provision.lua' ]; then
+  if [ ${TEST_NAME} != 'common.lua' -a ${TEST_NAME} != 'provision.lua' -a ${TEST_NAME} != 'post_setup.lua' ]; then
     echo "\n${LINE}"
     echo ${TEST}
     echo "${LINE}\n"
