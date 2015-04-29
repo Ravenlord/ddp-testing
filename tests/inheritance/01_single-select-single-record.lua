@@ -55,6 +55,6 @@ function benchmark()
   local query = [[
 SELECT `name`, `office`, `phone`, `division`, `board`
 FROM `employees`
-WHERE `id` = ]] .. sb_rand_uniform(1024, 1073)
+WHERE `type` = 2 AND `id` = ]] .. sb_rand_uniform(1024, 1073)
   rs = db_query(query)
 end
