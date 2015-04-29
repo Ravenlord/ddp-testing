@@ -18,7 +18,7 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Attribute Clutter", trigger solution.
+ - Benchmark file for design problem "Calculated Values", truly virtual column solution.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -31,8 +31,8 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
-dofile(pathtest .. "cv_row-derived-01_trivial.lua")
+dofile(pathtest .. "../../common.inc")
+dofile(pathtest .. "01_trivial-select.lua")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -45,34 +45,11 @@ function prepare_data()
   -- Reuse the data preparation.
   prepare_row_derived()
 
-  -- Add the new column.
+  -- Add the virtual column.
   query = [[
 ALTER TABLE `products`
-  ADD COLUMN `price` NUMERIC(7,2) AFTER `vat_rate`
-]]
-  db_query(query)
-  -- Prepopulate the calculated values.
-  query = [[
-UPDATE `products` SET `price` = `base_price` * (1 + `vat_rate`)
-]]
-  db_query(query)
-  -- Create the triggers.
-  query = [[
-CREATE TRIGGER `products_insert_trigger`
-BEFORE INSERT ON `products`
-FOR EACH ROW
-BEGIN
-  SET NEW.`price` = NEW.`base_price` * (1 + NEW.`vat_rate`);
-END;
-]]
-  db_query(query)
-  query = [[
-CREATE TRIGGER `products_update_trigger`
-BEFORE UPDATE ON `products`
-FOR EACH ROW
-BEGIN
-  SET NEW.`price` = NEW.`base_price` * (1 + NEW.`vat_rate`);
-END;
+  ADD COLUMN `price` NUMERIC(7,2) AS (`base_price` * (1 + `vat_rate`)) VIRTUAL
+  AFTER `vat_rate`
 ]]
   db_query(query)
 end
@@ -81,37 +58,8 @@ end
 -- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
 
 
---- Execute the delete benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_delete()
-  print('delete')
-  -- @todo Implement delete benchmark.
-end
-
---- Execute the insert benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_insert()
-  print('insert')
-  -- @todo Implement insert benchmark.
-end
-
 --- Execute the select benchmark queries.
 -- Is called during the run command of sysbench.
 function benchmark_select()
-  print('select')
- rs = db_query('SELECT * FROM `products` WHERE `id` = ' .. sb_rand_uniform(1, 10000))
+  rs = db_query('SELECT * FROM `products` WHERE `id` = ' .. sb_rand_uniform(1, 10000))
 end
-
---- Execute the update benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_update()
-
-print('update')
-  -- @todo Implement update benchmark.
-end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
-
-
-dofile(pathtest .. "post_setup.lua")

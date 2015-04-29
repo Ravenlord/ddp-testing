@@ -18,7 +18,7 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Calculated Values (dependent)", View solution.
+ - Benchmark file for design problem "Calculated Values (dependent)", Trigger solution.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -31,8 +31,8 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
-dofile(pathtest .. "cv_dependent-01_trivial.lua")
+dofile(pathtest .. "../../common.inc")
+dofile(pathtest .. "01_trivial-select.lua")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -45,53 +45,72 @@ function prepare_data()
   -- Reuse data preparation.
   prepare_dependent()
 
-  -- Create the view.
+  -- Add the new column.
   query = [[
-CREATE VIEW `v_product_order_amount` AS (
-   SELECT
-    p.`id`,
-    p.`name`,
-    SUM(l.`amount`) AS `amount_ordered`
-  FROM `products` AS p
-    INNER JOIN `line_items` AS `l` ON p.`id` = l.`product_id`
-  GROUP BY p.`id`, p.`name`
-  ORDER BY `amount_ordered` DESC
-)
+ALTER TABLE `products`
+  ADD COLUMN `amount_ordered` INTEGER UNSIGNED AFTER `price`
 ]]
   db_query(query)
-  fail()
+  -- Prepopulate the calculated values.
+  query = [[
+UPDATE `products` SET `amount_ordered` = (SELECT SUM(`amount`) FROM `line_items` WHERE `product_id` = `id`)
+]]
+  db_query(query)
+
+  -- Create the triggers.
+  query = [[
+CREATE TRIGGER `products_amount_insert_trigger`
+AFTER INSERT ON `line_items`
+FOR EACH ROW
+BEGIN
+  UPDATE `products`
+    SET `amount_ordered` = `amount_ordered` + NEW.`amount`
+    WHERE `products`.`id` = NEW.`product_id`;
+END;
+]]
+  db_query(query)
+
+  query = [[
+CREATE TRIGGER `products_amount_update_trigger`
+AFTER UPDATE ON `line_items`
+FOR EACH ROW
+BEGIN
+  IF OLD.`product_id` != NEW.`product_id`
+  THEN
+    UPDATE `products`
+      SET `amount_ordered` = `amount_ordered` - OLD.`amount`
+      WHERE `products`.`id` = OLD.`product_id`;
+    UPDATE `products`
+      SET `amount_ordered` = `amount_ordered` + NEW.`amount`
+      WHERE `products`.`id` = NEW.`product_id`;
+  ELSE
+    UPDATE `products`
+      SET `amount_ordered` = `amount_ordered` + NEW.`amount` - OLD.`amount`
+      WHERE `products`.`id` = NEW.`product_id`;
+  END IF;
+END;
+]]
+  db_query(query)
+
+  query = [[
+CREATE TRIGGER `products_amount_delete_trigger`
+AFTER DELETE ON `line_items`
+FOR EACH ROW
+BEGIN
+  UPDATE `products`
+    SET `amount_ordered` = `amount_ordered` - OLD.`amount`
+    WHERE `products`.`id` = OLD.`product_id`;
+END;
+]]
+  db_query(query)
 end
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
 
 
---- Execute the delete benchmark queries.
+--- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
-function benchmark_delete()
+function benchmark()
   -- @todo Implement delete benchmark.
 end
-
---- Execute the insert benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_insert()
-  -- @todo Implement insert benchmark.
-end
-
---- Execute the select benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_select()
-  -- @todo Implement select benchmark.
-end
-
---- Execute the update benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_update()
-  -- @todo Implement update benchmark.
-end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
-
-
-dofile(pathtest .. "post_setup.lua")

@@ -18,7 +18,7 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Calculated Values", view solution.
+ - Benchmark file for design problem "Trees", "Path Enumeration" solution.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -31,66 +31,44 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
-dofile(pathtest .. "cv_row-derived-01_trivial.lua")
+dofile(pathtest .. "../common.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
 
 
 --- Prepare data for the benchmark.
--- Is called during the prepare command of sysbench in common.lua.
+--  Is called during the prepare command of sysbench in common.lua.
 function prepare_data()
- local query
- -- Reuse the data preparation.
- prepare_row_derived()
-
- -- Create the view.
- query = [[
-CREATE VIEW `v_products` AS (
-  SELECT
-    `id`,
-    `name`,
-    `description`,
-    `base_price`,
-    `vat_rate`,
-    `base_price` * (1 + `vat_rate`) AS `price`
-  FROM `products`
+  local query
+  query = [[
+CREATE TABLE `animals` (
+  `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  `path` VARCHAR(255) NOT NULL,
+  INDEX (`path`)
 )
 ]]
- db_query(query)
+  db_query(query)
+  db_query("INSERT INTO `animals` SET `name` = 'carnivore', `path` = '1/'")
+  db_query("INSERT INTO `animals` SET `name` = 'feline', `path` = '1/2/'")
+  db_query("INSERT INTO `animals` SET `name` = 'cat', `path` = '1/2/3/'")
+  db_query("INSERT INTO `animals` SET `name` = 'big cat', `path` = '1/2/4/'")
+  db_query("INSERT INTO `animals` SET `name` = 'tiger', `path` = '1/2/4/5/'")
+  db_query("INSERT INTO `animals` SET `name` = 'lion', `path` = '1/2/4/6/'")
+
+  db_query("INSERT INTO `animals` SET `name` = 'canine', `path` = '1/7/'")
+  db_query("INSERT INTO `animals` SET `name` = 'dog', `path` = '1/7/8/'")
+  db_query("INSERT INTO `animals` SET `name` = 'wolf', `path` = '1/7/9/'")
+  db_query("INSERT INTO `animals` SET `name` = 'fox', `path` = '1/7/10/'")
 end
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
 
 
---- Execute the delete benchmark queries.
+--- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
-function benchmark_delete()
-  -- @todo Implement delete benchmark.
+function benchmark()
+  -- @todo Implement benchmark.
 end
-
---- Execute the insert benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_insert()
-  -- @todo Implement insert benchmark.
-end
-
---- Execute the select benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_select()
- rs = db_query('SELECT * FROM `v_products` WHERE `id` = ' .. sb_rand_uniform(1, 10000))
-end
-
---- Execute the update benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_update()
-  -- @todo Implement update benchmark.
-end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
-
-
-dofile(pathtest .. "post_setup.lua")

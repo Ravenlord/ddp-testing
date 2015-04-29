@@ -31,7 +31,7 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
+dofile(pathtest .. "../common.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -132,32 +132,8 @@ end
 -- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
 
 
---- Execute the delete benchmark queries.
+--- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
-function benchmark_delete()
+function benchmark()
   -- @todo Implement delete benchmark.
 end
-
---- Execute the insert benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_insert()
-  -- @todo Implement insert benchmark.
-end
-
---- Execute the select benchmark queries.
---  Is called during the run command of sysbench.
-function benchmark_select()
-  -- @todo Implement select benchmark.
-end
-
---- Execute the update benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_update()
-  -- @todo Implement update benchmark.
-end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
-
-
-dofile(pathtest .. "post_setup.lua")

@@ -18,7 +18,7 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Attribute Clutter", solution "Column Outsourcing".
+ - Benchmark file for design problem "Attribute Clutter", trivial solution.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -31,7 +31,7 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
+dofile(pathtest .. "../common.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -42,79 +42,58 @@ dofile(pathtest .. "common.lua")
 function prepare_data()
   local query
   prepare_departments('emp_dep', 1000)
-  prepare_images('employee_profiles', 1000, '/tmp/image.png')
+  prepare_images('emp_img', 1000, '/tmp/image.png')
   prepare_person_names('emp_nam', 1000)
   prepare_phone_numbers('emp_pho', 1000)
-  prepare_salaries('employee_accounting', 100, 10, '0.75')
+  prepare_salaries('emp_sal', 100, 10, '0.75')
 
-
-  -- Create the employees table.
+  -- Create the real employees table.
   query = [[
 CREATE TABLE `employees` (
   `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL,
   `department` VARCHAR(255) NOT NULL,
-  `phone` INTEGER(5) NOT NULL,
+  `phone` INTEGER(5) UNSIGNED NOT NULL,
+  `image` MEDIUMBLOB,
+  `base_salary` NUMERIC(7,2) NOT NULL,
+  `bonus` NUMERIC(7,2) NOT NULL,
+  `tax_rate` NUMERIC(3,2) NOT NULL,
   INDEX `employees_departments` (`department`)
 )
 ]]
   db_query(query)
   -- Insert test data by joining.
   query = [[
-INSERT INTO `employees` (`name`, `department`, `phone`)
+INSERT INTO `employees` (`name`, `department`, `phone`, `image`, `base_salary`, `bonus`, `tax_rate`)
   SELECT
     `emp_nam`.`name`,
     `emp_dep`.`department`,
-    `emp_pho`.`phone`
+    `emp_pho`.`phone`,
+    `emp_img`.`image`,
+    `emp_sal`.`base_salary`,
+    `emp_sal`.`bonus`,
+    `emp_sal`.`tax_rate`
   FROM `emp_nam`
     INNER JOIN `emp_dep` ON `emp_dep`.`id` = `emp_nam`.`id`
     INNER JOIN `emp_pho` ON `emp_pho`.`id` = `emp_nam`.`id`
+    INNER JOIN `emp_img` ON `emp_img`.`id` = `emp_nam`.`id`
+    INNER JOIN `emp_sal` ON `emp_sal`.`id` = `emp_nam`.`id`
 ]]
   db_query(query)
 
-  -- Delete null rows from images table.
-  db_query('DELETE FROM `employee_profiles` WHERE `image` IS NULL')
-
-  -- Create foreign keys on dependent tables.
-  db_query('ALTER TABLE `employee_accounting` ADD FOREIGN KEY (`id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE')
-  db_query('ALTER TABLE `employee_profiles` ADD FOREIGN KEY (`id`) REFERENCES `employees`(`id`) ON DELETE CASCADE ON UPDATE CASCADE')
-
-  -- Drop unnecessary tables.
+  -- Delete unnecessary tables.
   drop_table('emp_dep')
+  drop_table('emp_img')
   drop_table('emp_nam')
   drop_table('emp_pho')
+  drop_table('emp_sal')
 end
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
 
-
---- Execute the delete benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_delete()
-  -- @todo Implement delete benchmark.
-end
-
---- Execute the insert benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_insert()
-  -- @todo Implement insert benchmark.
-end
-
---- Execute the select benchmark queries.
+--- Execute the benchmark queries.
 --  Is called during the run command of sysbench.
-function benchmark_select()
+function benchmark()
   rs = db_query("SELECT `id`, `name`, `phone` FROM `employees` WHERE `department` = '" .. departments[sb_rand_uniform(1,10)] .. "' ORDER BY `name` ASC")
 end
-
---- Execute the update benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_update()
-  -- @todo Implement update benchmark.
-end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
-
-
-dofile(pathtest .. "post_setup.lua")

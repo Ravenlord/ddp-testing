@@ -18,16 +18,55 @@
 --]]
 
 --[[
- - Global variable declarations, which have to be set AFTER everything is parsed.
+ - Benchmark file for design problem "Calculated Values", view solution.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
  - @license http://unlicense.org/ Unlicense
 --]]
 
-sql_functions = {
- delete = benchmark_delete,
- insert = benchmark_insert,
- select = benchmark_select,
- update = benchmark_update
-}
+
+-- --------------------------------------------------------------------------------------------------------------------- Includes
+
+
+pathtest = string.match(test, "(.*/)") or ""
+
+dofile(pathtest .. "../../common.inc")
+dofile(pathtest .. "01_trivial-select.lua")
+
+
+-- --------------------------------------------------------------------------------------------------------------------- Preparation functions
+
+
+--- Prepare data for the benchmark.
+-- Is called during the prepare command of sysbench in common.lua.
+function prepare_data()
+ local query
+ -- Reuse the data preparation.
+ prepare_row_derived()
+
+ -- Create the view.
+ query = [[
+CREATE VIEW `v_products` AS (
+  SELECT
+    `id`,
+    `name`,
+    `description`,
+    `base_price`,
+    `vat_rate`,
+    `base_price` * (1 + `vat_rate`) AS `price`
+  FROM `products`
+)
+]]
+ db_query(query)
+end
+
+
+-- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
+
+
+--- Execute the select benchmark queries.
+-- Is called during the run command of sysbench.
+function benchmark_select()
+ rs = db_query('SELECT * FROM `v_products` WHERE `id` = ' .. sb_rand_uniform(1, 10000))
+end

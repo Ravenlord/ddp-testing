@@ -18,7 +18,7 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Trees", "Adjacency List" solution.
+ - Benchmark file for design problem "Calculated Values", persistent virtual column solution.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -31,68 +31,35 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
+dofile(pathtest .. "../../common.inc")
+dofile(pathtest .. "01_trivial-select.lua")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
 
 
 --- Prepare data for the benchmark.
---  Is called during the prepare command of sysbench in common.lua.
+-- Is called during the prepare command of sysbench in common.lua.
 function prepare_data()
   local query
+  -- Reuse the data preparation.
+  prepare_row_derived()
+
+  -- Add the virtual column.
   query = [[
-CREATE TABLE `animals` (
-  `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `name` VARCHAR(255) NOT NULL,
-  `parent_id` INTEGER UNSIGNED,
-  CONSTRAINT `fk_animal_parent` FOREIGN KEY (`parent_id`) REFERENCES `animals` (`id`)
-)
+ALTER TABLE `products`
+  ADD COLUMN `price` NUMERIC(7,2) AS (`base_price` * (1 + `vat_rate`)) PERSISTENT
+  AFTER `vat_rate`
 ]]
   db_query(query)
-  db_query("INSERT INTO `animals` SET `name` = 'carnivore'")
-  db_query("INSERT INTO `animals` SET `name` = 'feline', `parent_id` = 1")
-  db_query("INSERT INTO `animals` SET `name` = 'cat', `parent_id` = 2")
-  db_query("INSERT INTO `animals` SET `name` = 'big cat', `parent_id` = 2")
-  db_query("INSERT INTO `animals` SET `name` = 'tiger', `parent_id` = 4")
-  db_query("INSERT INTO `animals` SET `name` = 'lion', `parent_id` = 4")
-
-  db_query("INSERT INTO `animals` SET `name` = 'canine', `parent_id` = 1")
-  db_query("INSERT INTO `animals` SET `name` = 'dog', `parent_id` = 7")
-  db_query("INSERT INTO `animals` SET `name` = 'wolf', `parent_id` = 7")
-  db_query("INSERT INTO `animals` SET `name` = 'fox', `parent_id` = 7")
 end
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
 
 
---- Execute the delete benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_delete()
-  -- @todo Implement delete benchmark.
-end
-
---- Execute the insert benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_insert()
-  -- @todo Implement insert benchmark.
-end
-
 --- Execute the select benchmark queries.
---  Is called during the run command of sysbench.
-function benchmark_select()
-  -- @todo Implement select benchmark.
-end
-
---- Execute the update benchmark queries.
 -- Is called during the run command of sysbench.
-function benchmark_update()
-  -- @todo Implement update benchmark.
+function benchmark_select()
+  rs = db_query('SELECT * FROM `products` WHERE `id` = ' .. sb_rand_uniform(1, 10000))
 end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
-
-
-dofile(pathtest .. "post_setup.lua")

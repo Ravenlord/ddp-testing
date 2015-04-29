@@ -18,7 +18,7 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Calculated Values", truly virtual column solution.
+ - Benchmark file for design problem "Calculated Values (dependent)", View solution.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -31,8 +31,8 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
-dofile(pathtest .. "cv_row-derived-01_trivial.lua")
+dofile(pathtest .. "../../common.inc")
+dofile(pathtest .. "01_trivial-select.lua")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -42,14 +42,21 @@ dofile(pathtest .. "cv_row-derived-01_trivial.lua")
 -- Is called during the prepare command of sysbench in common.lua.
 function prepare_data()
   local query
-  -- Reuse the data preparation.
-  prepare_row_derived()
+  -- Reuse data preparation.
+  prepare_dependent()
 
-  -- Add the virtual column.
+  -- Create the view.
   query = [[
-ALTER TABLE `products`
-  ADD COLUMN `price` NUMERIC(7,2) AS (`base_price` * (1 + `vat_rate`)) VIRTUAL
-  AFTER `vat_rate`
+CREATE VIEW `v_product_order_amount` AS (
+   SELECT
+    p.`id`,
+    p.`name`,
+    SUM(l.`amount`) AS `amount_ordered`
+  FROM `products` AS p
+    INNER JOIN `line_items` AS `l` ON p.`id` = l.`product_id`
+  GROUP BY p.`id`, p.`name`
+  ORDER BY `amount_ordered` DESC
+)
 ]]
   db_query(query)
 end
@@ -58,32 +65,8 @@ end
 -- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
 
 
---- Execute the delete benchmark queries.
+--- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
-function benchmark_delete()
+function benchmark()
   -- @todo Implement delete benchmark.
 end
-
---- Execute the insert benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_insert()
-  -- @todo Implement insert benchmark.
-end
-
---- Execute the select benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_select()
-  rs = db_query('SELECT * FROM `products` WHERE `id` = ' .. sb_rand_uniform(1, 10000))
-end
-
---- Execute the update benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_update()
-  -- @todo Implement update benchmark.
-end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
-
-
-dofile(pathtest .. "post_setup.lua")

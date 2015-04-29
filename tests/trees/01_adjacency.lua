@@ -18,7 +18,7 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Trees", "Path Enumeration" solution.
+ - Benchmark file for design problem "Trees", "Adjacency List" solution.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -31,7 +31,7 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
+dofile(pathtest .. "../common.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -45,54 +45,30 @@ function prepare_data()
 CREATE TABLE `animals` (
   `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL,
-  `path` VARCHAR(255) NOT NULL,
-  INDEX (`path`)
+  `parent_id` INTEGER UNSIGNED,
+  CONSTRAINT `fk_animal_parent` FOREIGN KEY (`parent_id`) REFERENCES `animals` (`id`)
 )
 ]]
   db_query(query)
-  db_query("INSERT INTO `animals` SET `name` = 'carnivore', `path` = '1/'")
-  db_query("INSERT INTO `animals` SET `name` = 'feline', `path` = '1/2/'")
-  db_query("INSERT INTO `animals` SET `name` = 'cat', `path` = '1/2/3/'")
-  db_query("INSERT INTO `animals` SET `name` = 'big cat', `path` = '1/2/4/'")
-  db_query("INSERT INTO `animals` SET `name` = 'tiger', `path` = '1/2/4/5/'")
-  db_query("INSERT INTO `animals` SET `name` = 'lion', `path` = '1/2/4/6/'")
+  db_query("INSERT INTO `animals` SET `name` = 'carnivore'")
+  db_query("INSERT INTO `animals` SET `name` = 'feline', `parent_id` = 1")
+  db_query("INSERT INTO `animals` SET `name` = 'cat', `parent_id` = 2")
+  db_query("INSERT INTO `animals` SET `name` = 'big cat', `parent_id` = 2")
+  db_query("INSERT INTO `animals` SET `name` = 'tiger', `parent_id` = 4")
+  db_query("INSERT INTO `animals` SET `name` = 'lion', `parent_id` = 4")
 
-  db_query("INSERT INTO `animals` SET `name` = 'canine', `path` = '1/7/'")
-  db_query("INSERT INTO `animals` SET `name` = 'dog', `path` = '1/7/8/'")
-  db_query("INSERT INTO `animals` SET `name` = 'wolf', `path` = '1/7/9/'")
-  db_query("INSERT INTO `animals` SET `name` = 'fox', `path` = '1/7/10/'")
+  db_query("INSERT INTO `animals` SET `name` = 'canine', `parent_id` = 1")
+  db_query("INSERT INTO `animals` SET `name` = 'dog', `parent_id` = 7")
+  db_query("INSERT INTO `animals` SET `name` = 'wolf', `parent_id` = 7")
+  db_query("INSERT INTO `animals` SET `name` = 'fox', `parent_id` = 7")
 end
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
 
 
---- Execute the delete benchmark queries.
+--- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
-function benchmark_delete()
-  -- @todo Implement delete benchmark.
+function benchmark()
+  -- @todo Implement benchmark.
 end
-
---- Execute the insert benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_insert()
-  -- @todo Implement insert benchmark.
-end
-
---- Execute the select benchmark queries.
---  Is called during the run command of sysbench.
-function benchmark_select()
-  -- @todo Implement select benchmark.
-end
-
---- Execute the update benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark_update()
-  -- @todo Implement update benchmark.
-end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Post-parsing setup
-
-
-dofile(pathtest .. "post_setup.lua")
