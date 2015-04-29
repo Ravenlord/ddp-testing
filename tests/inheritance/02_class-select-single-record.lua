@@ -18,7 +18,7 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Inheritance", solution "Concrete Table Inheritance".
+ - Benchmark file for design problem "Inheritance", solution "Class Table Inheritance".
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -32,7 +32,7 @@
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "../common.inc")
-dofile(pathtest .. "01_single-select.lua")
+dofile(pathtest .. "prepare.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -42,22 +42,38 @@ dofile(pathtest .. "01_single-select.lua")
 --  Is called during the prepare command of sysbench in common.lua.
 function prepare_data()
   local query
-  -- Reuse the data preparation.
+  -- Reuse common data preparation.
   prepare_schema()
 
-  -- Create the new schema and convert from Single Table Inheritance to Concrete Table Inheritance.
+  -- Create the new schema and convert from Single Table Inheritance to Class Table Inheritance.
+  db_query('ALTER TABLE `employees` RENAME `emp`')
   query = [[
-CREATE TABLE `contractors` (
+  CREATE TABLE `employees` (
   `id` INTEGER UNSIGNED PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `project` VARCHAR(255) NOT NULL,
-  `start_date` DATE NOT NULL,
-  `end_date` DATE
+  `name` VARCHAR(255) NOT NULL
 )]]
   db_query(query)
   query = [[
-INSERT INTO `contractors` (`id`, `name`, `project`, `start_date`, `end_date`)
-  SELECT `id`, `name`, `project`, `start_date`, `end_date` FROM `employees` WHERE `type` = 3;
+INSERT INTO `employees` (`id`, `name`)
+  SELECT `id`, `name` FROM `emp`
+]]
+  db_query(query)
+  db_query('ALTER TABLE `employees` MODIFY `id` INTEGER UNSIGNED AUTO_INCREMENT')
+
+  query = [[
+CREATE TABLE `contractors` (
+  `id` INTEGER UNSIGNED PRIMARY KEY,
+  `project` VARCHAR(255) NOT NULL,
+  `start_date` DATE NOT NULL,
+  `end_date` DATE,
+  FOREIGN KEY (`id`) REFERENCES `employees`(`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+)]]
+  db_query(query)
+  query = [[
+INSERT INTO `contractors` (`id`, `project`, `start_date`, `end_date`)
+  SELECT `id`, `project`, `start_date`, `end_date` FROM `emp` WHERE `type` = 3;
 ]]
   db_query(query)
 
@@ -65,34 +81,36 @@ INSERT INTO `contractors` (`id`, `name`, `project`, `start_date`, `end_date`)
   query = [[
 CREATE TABLE `regular_employees` (
   `id` INTEGER UNSIGNED PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
   `office` INTEGER(3) UNSIGNED NOT NULL,
-  `phone` INTEGER(5) UNSIGNED
+  `phone` INTEGER(5) UNSIGNED,
+  FOREIGN KEY (`id`) REFERENCES `employees`(`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 )]]
   db_query(query)
   query = [[
-INSERT INTO `regular_employees` (`id`, `name`, `office`, `phone`)
-  SELECT `id`, `name`, `office`, `phone` FROM `employees` WHERE `type` = 1;
+INSERT INTO `regular_employees` (`id`, `office`, `phone`)
+  SELECT `id`, `office`, `phone` FROM `emp` WHERE `type` = 1 OR `type` = 2;
 ]]
   db_query(query)
 
   query = [[
 CREATE TABLE `managers` (
   `id` INTEGER UNSIGNED PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `office` INTEGER(3) UNSIGNED NOT NULL,
-  `phone` INTEGER(5) UNSIGNED,
   `division` VARCHAR(255) NOT NULL,
-  `board` VARCHAR(255)
+  `board` VARCHAR(255),
+  FOREIGN KEY (`id`) REFERENCES `regular_employees`(`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 )]]
   db_query(query)
   query = [[
-INSERT INTO `managers` (`id`, `name`, `office`, `phone`, `division`, `board`)
-  SELECT `id`, `name`, `office`, `phone`, `division`, `board` FROM `employees` WHERE `type` = 2;
+INSERT INTO `managers` (`id`, `division`, `board`)
+  SELECT `id`, `division`, `board` FROM `emp` WHERE `type` = 2;
 ]]
   db_query(query)
 
-  drop_table('employees')
+  drop_table('emp')
 end
 
 
@@ -102,5 +120,11 @@ end
 --- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
 function benchmark()
-  -- @todo Implement delete benchmark.
+  local query = [[
+SELECT `e`.`name`, `re`.`office`, `re`.`phone`, `m`.`division`, `m`.`board`
+FROM `managers` AS `m`
+  INNER JOIN `regular_employees` AS `re` ON `re`.`id` = `m`.`id`
+  INNER JOIN `employees` AS `e` ON `e`.`id` = `m`.`id`
+WHERE `m`.`id` = ]] .. sb_rand_uniform(1024, 1073)
+  rs = db_query(query)
 end

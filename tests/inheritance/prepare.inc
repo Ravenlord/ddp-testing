@@ -18,26 +18,15 @@
 --]]
 
 --[[
- - Benchmark file for design problem "Inheritance", solution "Single Table Inheritance".
+ - Test data preparation for Inheritance tests.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
  - @license http://unlicense.org/ Unlicense
 --]]
 
-
--- --------------------------------------------------------------------------------------------------------------------- Includes
-
-
-pathtest = string.match(test, "(.*/)") or ""
-
-dofile(pathtest .. "../common.inc")
-
-
--- --------------------------------------------------------------------------------------------------------------------- Preparation functions
-
 --- Prepare data for the benchmarks.
--- Own function for reusability in the other patterns.
+-- Own function for reusability in all test cases.
 function prepare_schema()
   local query
   prepare_person_names('emp_nam', 1000)
@@ -120,20 +109,4 @@ INSERT INTO `employees` (`type`, `name`, `project`, `start_date`, `end_date`)
   drop_table('man_div')
   drop_table('man_boa')
   drop_table('con_dat')
-end
-
---- Prepare data for the benchmark.
---  Is called during the prepare command of sysbench in common.lua.
-function prepare_data()
-  prepare_schema()
-end
-
-
--- --------------------------------------------------------------------------------------------------------------------- Benchmark functions
-
-
---- Execute the benchmark queries.
--- Is called during the run command of sysbench.
-function benchmark()
-  -- @todo Implement delete benchmark.
 end
