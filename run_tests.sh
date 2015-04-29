@@ -35,43 +35,44 @@
 # LICENSE: http://unlicense.org/ PD
 # ------------------------------------------------------------------------------
 
+
 # ------------------------------------------------------------------------------
 # Functions
 # ------------------------------------------------------------------------------
 
-# Run a benchmark.
+
+# Run a set of benchmarks.
 #
 # RETURN:
 # 0 - Run successful.
-# 1 - Run failed.
-run_test()
+# 1 - No tests specified.
+run_tests()
 {
-  if [ -z "$1" ]; then
-    echo 'No test specified.'
-    return 1
-  fi
-  if [ -z "$2" ]; then
-    echo 'No test mode specified.'
+  if [ $# -lt 1 ]; then
+    echo 'No tests specified.'
     return 1
   fi
 
-  TEST_NAME=$(basename $1)
-  echo "Starting $2 test: $1"
-  echo "Creating test schema: ${SCHEMA}"
-  mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
-  mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA};"
-  echo "Preparing benchmark"
-  sysbench ${SYSBENCH_OPTIONS}$1 prepare > /dev/null 2>&1
-  mkdir -p ${OUTPUT_DIR}${TEST_NAME}
-  echo "Restarting MySQL server"
-  service mysql restart
-  echo "Running benchmark"
-  sysbench ${NUM_THREADS} ${REQUESTS} ${TIME} ${SYSBENCH_OPTIONS}$1 --sql-mode=$2 run > ${OUTPUT_DIR}${TEST_NAME}/benchmark_$2.log 2>&1
-  echo "Cleaning up test schema: ${SCHEMA}"
-  mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
-  echo "Completed $2 test: $1\n"
+  for TEST in $@
+  do
+    TEST_NAME=$(basename ${TEST})
+    TEST_DIR=$(dirname ${TEST})
+    echo "Starting test: ${TEST}"
+    echo "Creating test schema: ${SCHEMA}"
+    mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
+    mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA};"
+    echo "Preparing benchmark"
+    sysbench ${SYSBENCH_OPTIONS}${TEST} prepare > /dev/null 2>&1
+    mkdir -p ${OUTPUT_DIR}${TEST_DIR}
+    echo "Restarting MySQL server"
+    service mysql restart
+    echo "Running benchmark"
+    sysbench ${NUM_THREADS} ${REQUESTS} ${TIME} ${SYSBENCH_OPTIONS}${TEST} run > ${OUTPUT_DIR}${TEST_DIR}/${TEST_NAME}.log 2>&1
+    echo "Cleaning up test schema: ${SCHEMA}"
+    mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA};"
+    echo "Completed test: ${TEST}\n"
+  done
 }
-
 
 # Print usage information.
 #
@@ -107,9 +108,11 @@ Usage example: \`sh run_tests -d tests -t 300 --\`
 EOT
 }
 
+
 # ------------------------------------------------------------------------------
 # Variables
 # ------------------------------------------------------------------------------
+
 
 # Directory containing sysbench test files.
 DIR='tests/'
@@ -142,9 +145,11 @@ TIME=60
 # Database user for sysbench.
 USER='root'
 
+
 # ------------------------------------------------------------------------------
 # Program
 # ------------------------------------------------------------------------------
+
 
 # Check exit / return code of every command / function and bail if non-zero.
 set -e
@@ -194,42 +199,31 @@ SYSBENCH_OPTIONS="${SYSBENCH_SCHEMA} ${SYSBENCH_SCHEMA_DATA} ${USER} --mysql-soc
 # Prepare test case names. If we have arguments, interpret them as test cases to execute.
 # Otherwise, take test cases from test directory.
 if [ $# -gt 0 ]; then
-  # We have arguments, just put them into the tests "array".
-  TESTS=$@
   echo "Found argument(s), entering single test mode."
+  # We have arguments, just run them.
+  run_tests $@
 else
-  # Obtain the tests list from the test directory with their correct path.
-  TESTS=$(ls ${DIR}*.lua)
   PROVISION=true
   echo "No arguments specified, entering bulk mode with provisioning."
-fi
 
-# Check if test suite provisioning file exists and execute the prepare step.
-if [ ${PROVISION} = true -a -f "${DIR}provision.lua" ]; then
-  echo "Found provisioning file 'provision.lua', starting test suite preparations."
-  echo "Creating test data schema: ${SCHEMA_DATA}"
-  mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
-  mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA_DATA};"
-  # This is needed for convenience.
-  mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA IF NOT EXISTS ${SCHEMA};"
-  echo "Preparing test data"
-  sysbench ${SYSBENCH_OPTIONS}${DIR}provision.lua prepare > /dev/null 2>&1
-fi
-
-# Process all tests specified either from directory or arguments.
-for TEST in ${TESTS}
-do
-  TEST_NAME=$(basename ${TEST})
-  if [ ${TEST_NAME} != 'common.lua' -a ${TEST_NAME} != 'provision.lua' -a ${TEST_NAME} != 'post_setup.lua' ]; then
-    echo "\n${LINE}"
-    echo ${TEST}
-    echo "${LINE}\n"
-    run_test ${TEST} 'select'
-    run_test ${TEST} 'insert'
-    run_test ${TEST} 'update'
-    run_test ${TEST} 'delete'
+  # Check if test suite provisioning file exists and execute the data preparation step.
+  if [  -f "${DIR}provision.prov" ]; then
+    echo "Found provisioning file 'provision.lua', starting test suite preparations."
+    echo "Creating test data schema: ${SCHEMA_DATA}"
+    mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
+    mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA_DATA};"
+    # This is needed for convenience.
+    mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA IF NOT EXISTS ${SCHEMA};"
+    echo "Preparing test data"
+    sysbench ${SYSBENCH_OPTIONS}${DIR}provision.lua prepare > /dev/null 2>&1
   fi
-done
+
+  # Iterate tests directory and run tests in all subdirectories.
+  for CURDIR in $(find ${DIR} -type d)
+  do
+    run_tests $(ls ${CURDIR%/}/*.lua)
+  done
+fi
 
 echo "\n${LINE}"
 echo "Test suite completed."

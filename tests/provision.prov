@@ -31,7 +31,7 @@
 
 pathtest = string.match(test, "(.*/)") or ""
 
-dofile(pathtest .. "common.lua")
+dofile(pathtest .. "common.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
