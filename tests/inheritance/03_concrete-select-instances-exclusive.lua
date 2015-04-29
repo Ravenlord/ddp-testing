@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Inheritance", solution "Concrete Table Inheritance".
+ - Select all regular employees without subclass instances.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl

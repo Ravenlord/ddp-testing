@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Inheritance", solution "Single Table Inheritance".
+ - Select a single manager record (random id).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl

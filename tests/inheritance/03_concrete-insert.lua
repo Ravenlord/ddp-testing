@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Inheritance", solution "Concrete Table Inheritance".
+ - Insert a new manager (fixed id for simplicity).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
