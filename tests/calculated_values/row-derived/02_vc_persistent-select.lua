@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Calculated Values", persistent virtual column solution.
+ - Select single product (random id).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -32,7 +33,7 @@
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "../../common.inc")
-dofile(pathtest .. "01_trivial-select.lua")
+dofile(pathtest .. "prepare.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -60,6 +61,6 @@ end
 
 --- Execute the select benchmark queries.
 -- Is called during the run command of sysbench.
-function benchmark_select()
+function benchmark()
   rs = db_query('SELECT * FROM `products` WHERE `id` = ' .. sb_rand_uniform(1, 10000))
 end

@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Calculated Values", trivial solution.
+ - Select single product (random id).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -32,73 +33,16 @@
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "../../common.inc")
+dofile(pathtest .. "prepare.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
 
 
---- Prepare data for the calculated values row-derived benchmarks.
--- Own function for reuse.
-function prepare_row_derived()
-  local query
-  prepare_person_names('names', 10000)
-  prepare_texts('descriptions', 10000, '/tmp/description.txt')
-  -- Prepare base_price and tax_rate table.
-  query = [[
-CREATE TABLE `prices` (
-  `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `base_price` NUMERIC(7,2) NOT NULL,
-  `vat_rate` NUMERIC(3,2) NOT NULL
-)
-]]
-  db_query(query)
-  -- Insert test data by joining.
-  query = [[
-INSERT INTO `prices` (`base_price`, `vat_rate`)
-  SELECT `num1`.`value`, `num2`.`value`
-    FROM (
-      SELECT `value` FROM `]] .. schema_data .. [[`.`numerics` ORDER BY RAND() LIMIT 1000
-    ) AS `num1`
-    CROSS JOIN (
-      SELECT `value` FROM `]] .. schema_data .. [[`.`numerics` WHERE `value` < 1.0 ORDER BY RAND() LIMIT 10
-    ) AS `num2`
-]]
-  db_query(query)
-
-  -- Create the real products table.
-  query = [[
-CREATE TABLE `products` (
-  `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `name` VARCHAR(255) NOT NULL,
-  `description` MEDIUMTEXT NOT NULL,
-  `base_price` NUMERIC(7,2) NOT NULL,
-  `vat_rate` NUMERIC(3,2) NOT NULL
-)
-]]
-  db_query(query)
-  -- Insert test data by joining.
-  query = [[
-INSERT INTO `products` (`name`, `description`, `base_price`, `vat_rate`)
-  SELECT
-    `names`.`name`,
-    `descriptions`.`text`,
-    `prices`.`base_price`,
-    `prices`.`vat_rate`
-  FROM `names`
-    INNER JOIN `descriptions` ON `descriptions`.`id` = `names`.`id`
-    INNER JOIN `prices` ON `prices`.`id` = `names`.`id`
-]]
-  db_query(query)
-
-  -- Drop unnecessary tables.
-  drop_table('names')
-  drop_table('descriptions')
-  drop_table('prices')
-end
-
 --- Prepare data for the benchmark.
 -- Is called during the prepare command of sysbench in common.lua.
 function prepare_data()
+  -- Reuse data preparation.
   prepare_row_derived()
 end
 
