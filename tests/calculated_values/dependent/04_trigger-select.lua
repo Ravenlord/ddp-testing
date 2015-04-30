@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Calculated Values (dependent)", Trigger solution.
+ - Select top 20 most ordered products.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -32,7 +33,7 @@
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "../../common.inc")
-dofile(pathtest .. "01_trivial-select.lua")
+dofile(pathtest .. "prepare.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
@@ -45,10 +46,10 @@ function prepare_data()
   -- Reuse data preparation.
   prepare_dependent()
 
-  -- Add the new column.
+  -- Add the new column and an index on it.
   query = [[
 ALTER TABLE `products`
-  ADD COLUMN `amount_ordered` INTEGER UNSIGNED AFTER `price`
+  ADD COLUMN `amount_ordered` INTEGER UNSIGNED NOT NULL DEFAULT 0 AFTER `price`, ADD INDEX(`amount_ordered`)
 ]]
   db_query(query)
   -- Prepopulate the calculated values.
@@ -112,5 +113,14 @@ end
 --- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
 function benchmark()
-  -- @todo Implement delete benchmark.
+  local query = [[
+SELECT
+  `id`,
+  `name`,
+  `amount_ordered`
+FROM `products`
+ORDER BY `amount_ordered` DESC
+LIMIT 20
+]]
+  rs = db_query(query)
 end
