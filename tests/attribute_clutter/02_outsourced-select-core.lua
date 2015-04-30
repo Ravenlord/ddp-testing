@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Attribute Clutter", solution "Column Outsourcing".
+ - Select only core attributes of employees by department (random).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
