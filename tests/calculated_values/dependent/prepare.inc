@@ -83,10 +83,16 @@ CREATE TABLE `orders` (
 
   query = [[
 CREATE TABLE `line_items` (
-  `order_id` INTEGER UNSIGNED NOT NULL REFERENCES `orders`(`id`),
-  `product_id` INTEGER UNSIGNED NOT NULL REFERENCES `products`(`id`),
+  `order_id` INTEGER UNSIGNED NOT NULL,
+  `product_id` INTEGER UNSIGNED NOT NULL,
   `amount` INTEGER UNSIGNED NOT NULL,
-  PRIMARY KEY (`order_id`, `product_id`)
+  PRIMARY KEY (`order_id`, `product_id`),
+  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 )]]
   db_query(query)
 
