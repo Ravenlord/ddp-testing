@@ -112,6 +112,18 @@ INSERT INTO `line_items` (`product_id`, `order_id`, `amount`)
     db_query(query)
   end
 
+  -- Insert new order with fixed id for insert and update tests.
+  query = [[
+INSERT INTO `orders` (`id`, `date`, `customer`)
+  VALUES (2222, '2000-01-01', 'Some customer')
+]]
+  db_query(query)
+  -- Insert one line item for the new order for update tests.
+  query = [[
+INSERT INTO `line_items` (`order_id`, `product_id`, `amount`)
+  VALUES (2222, 123, 42)
+]]
+
   -- Drop unnecessary tables.
   drop_table('names')
   drop_table('descriptions')
