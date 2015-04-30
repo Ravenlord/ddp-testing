@@ -62,6 +62,24 @@ CREATE TABLE `animals` (
   db_query("INSERT INTO `animals` SET `name` = 'dog', `parent_id` = 7")
   db_query("INSERT INTO `animals` SET `name` = 'wolf', `parent_id` = 7")
   db_query("INSERT INTO `animals` SET `name` = 'fox', `parent_id` = 7")
+
+  -- Create ancestor traversal procedure.
+  query = [[
+CREATE FUNCTION `traverse_ancestors` (`current_animal` INTEGER)
+RETURNS VARCHAR(255)
+DETERMINISTIC
+BEGIN
+  DECLARE v_anc VARCHAR(255);
+  WHILE current_animal IS NOT NULL DO
+    SELECT CONCAT_WS(',', v_anc, current_animal) INTO v_anc;
+    SELECT `parent_id` INTO current_animal
+    FROM `animals`
+    WHERE `id` = current_animal;
+  END WHILE;
+  RETURN v_anc;
+END;
+]]
+  db_query(query)
 end
 
 
