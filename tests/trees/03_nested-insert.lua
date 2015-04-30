@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Nested Sets" solution.
+ - Insert intermediate node "four-legged" between "carnivore" and its children.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -72,5 +73,7 @@ end
 --- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
 function benchmark()
-  -- @todo Implement benchmark.
+  db_query('BEGIN')
+  rs = db_query("INSERT INTO `animals` (`id`, `name`, `left`, `right`) VALUES (11, 'four-legged', 150, 1950)")
+  db_query('ROLLBACK')
 end

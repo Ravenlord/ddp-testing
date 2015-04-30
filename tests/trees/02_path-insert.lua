@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Path Enumeration" solution.
+ - Insert intermediate node "four-legged" between "carnivore" and its children.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -45,7 +46,7 @@ function prepare_data()
 CREATE TABLE `animals` (
   `id` INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL,
-  `path` VARCHAR(255) NOT NULL,
+  `path` VARCHAR(255),
   INDEX (`path`)
 )
 ]]
@@ -70,5 +71,9 @@ end
 --- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
 function benchmark()
-  -- @todo Implement benchmark.
+  db_query('BEGIN')
+  rs = db_query("INSERT INTO `animals` (`id`, `name`) VALUES (11, 'four-legged')")
+  rs = db_query("UPDATE `animals` SET `path` = '1/11/' WHERE `id` = 11")
+  rs = db_query("UPDATE `animals` SET `path` = REPLACE(`path`, '1/', '1/11/') WHERE `path` LIKE CONCAT('1/', '%/') AND `id` != 11")
+  db_query('ROLLBACK')
 end

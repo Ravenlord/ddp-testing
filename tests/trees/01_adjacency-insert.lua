@@ -19,6 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Adjacency List" solution.
+ - Insert intermediate node "four-legged" between "carnivore" and its children.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -70,5 +71,8 @@ end
 --- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
 function benchmark()
-  -- @todo Implement benchmark.
+  db_query('BEGIN')
+  rs = db_query("INSERT INTO `animals` (`id`, `name`, `parent_id`) VALUES (11, 'four-legged', 1)")
+  rs = db_query("UPDATE `animals` SET `parent_id` = 11 WHERE `parent_id` = 1 AND `id` != 11")
+  db_query('ROLLBACK')
 end
