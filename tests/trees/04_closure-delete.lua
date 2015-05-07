@@ -19,7 +19,8 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Closure Table" solution.
- - Delete "big cat" and promote its children to the next parent.
+ - Delete "node-834" (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
+ - Promote its children to the next parent.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -46,9 +47,9 @@ function benchmark()
   rs = db_query([[
 UPDATE `tree_paths` SET `path_length` = `path_length` - 1
 WHERE `descendant` IN (SELECT `foo`.`d` FROM (
-  SELECT `t`.`descendant` AS `d` FROM `tree_paths` AS `t` WHERE `ancestor` = 4
+  SELECT `t`.`descendant` AS `d` FROM `tree_paths` AS `t` WHERE `ancestor` = 834
 ) AS `foo`) AND `ancestor` != `descendant`
 ]])
-  rs = db_query("DELETE FROM `animals` WHERE `id` = 4")
+  rs = db_query("DELETE FROM `animals` WHERE `id` = 834")
   db_query('ROLLBACK')
 end

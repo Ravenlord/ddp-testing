@@ -19,7 +19,8 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Adjacency List" solution.
- - Delete "big cat" and promote its children to the next parent.
+ - Delete "node-834" (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
+ - Promote its children to the next parent.
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -43,7 +44,7 @@ dofile(pathtest .. "01_adjacency-insert.lua")
 -- Is called during the run command of sysbench.
 function benchmark()
   db_query('BEGIN')
-  rs = db_query("UPDATE `animals` SET `parent_id` = (SELECT `foo`.`parent_id` FROM (SELECT `parent_id` FROM `animals` WHERE `id` = 4) AS `foo`) WHERE `parent_id` = 4")
-  rs = db_query("DELETE FROM `animals` WHERE `id` = 4")
+  rs = db_query("UPDATE `animals` SET `parent_id` = (SELECT `foo`.`parent_id` FROM (SELECT `parent_id` FROM `animals` WHERE `id` = 834) AS `foo`) WHERE `parent_id` = 834")
+  rs = db_query("DELETE FROM `animals` WHERE `id` = 834")
   db_query('ROLLBACK')
 end
