@@ -19,7 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Nested Sets" solution.
- - Select descendants of "feline".
+ - Select descendants of "node-834" (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -42,5 +42,5 @@ dofile(pathtest .. "03_nested-insert.lua")
 --- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
 function benchmark()
-  rs = db_query("SELECT * FROM `animals` WHERE `left` BETWEEN 200 AND 1200")
+  rs = db_query("SELECT * FROM `animals` WHERE `left` BETWEEN 166300 AND 178800")
 end

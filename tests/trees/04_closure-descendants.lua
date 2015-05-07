@@ -19,7 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Closure Table" solution.
- - Select descendants of "feline".
+ - Select descendants of "node-834" (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -46,6 +46,6 @@ function benchmark()
 SELECT `a`.*
 FROM `tree_paths` AS `t`
   INNER JOIN `animals` AS `a` ON `t`.`descendant` = `a`.`id`
-WHERE `t`.`ancestor` = 2
+WHERE `t`.`ancestor` = 834
 ]])
 end

@@ -19,7 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Adjacency List" solution.
- - Select descendants of "feline".
+ - Select descendants of "node-834" (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -43,10 +43,13 @@ dofile(pathtest .. "01_adjacency-insert.lua")
 -- Is called during the run command of sysbench.
 function benchmark()
   rs = db_query([[
-SELECT `a1`.*, `a2`.*, `a3`.*
+SELECT `a1`.*, `a2`.*, `a3`.*, `a4`.*, `a5`.*, `a6`.*
 FROM `animals` AS `a1`
   LEFT JOIN `animals` AS `a2` ON `a1`.`id` = `a2`.`parent_id`
   LEFT JOIN `animals` AS `a3` ON `a2`.`id` = `a3`.`parent_id`
+  LEFT JOIN `animals` AS `a4` ON `a3`.`id` = `a4`.`parent_id`
+  LEFT JOIN `animals` AS `a5` ON `a4`.`id` = `a5`.`parent_id`
+  LEFT JOIN `animals` AS `a6` ON `a5`.`id` = `a6`.`parent_id`
 WHERE `a1`.`id` = 2
 ]])
 end
