@@ -93,14 +93,14 @@ Options:
    for tests and are not executed.
    If a file named 'provision.lua' exists, it will be used to create the
    prerequisites of the test suite with an additional prepare command.
--n The number of thread sysbench will use, defaults to 8.
+-n The number of threads sysbench will use, defaults to 4.
 -o Output directory for benchmark logs, defaults to 'results/'.
 -p The password sysbench will use for the database connection, defaults to none.
    It is highly recommended to use a user account with no password, since
    mysql client commands are run, which will prompt for a password otherwise.
 -r Maximum requests sysbench will perform (0 = unlimited), defaults to 0.
 -s The test database schema sysbench will use, defaults to 'test'.
--t Maximum time in seconds sysbench will run (0 = unlimited), defaults to 60.
+-t Maximum time in seconds sysbench will run (0 = unlimited), defaults to 30.
 -u The database user sysbench will use, defaults to 'root'.
 -x The database schema used for populating test data, defaults to 'data'.
 -h|? Print this text and exit.
@@ -141,7 +141,7 @@ SYSBENCH_SCHEMA_DATA='--schema-data='
 # List of test files to execute.
 TESTS=''
 # Maximum time in seconds the tests will run.
-TIME=60
+TIME=30
 # Database user for sysbench.
 USER='root'
 
