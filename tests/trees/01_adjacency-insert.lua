@@ -33,10 +33,23 @@
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "../common.inc")
+dofile(pathtest .. "prepare.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
 
+
+--- Implement the appropriate insert function.
+-- Is called during tree traversal in prepare_tree().
+function Node:insertPre()
+  local par
+  if self.parent == nil then
+    par = 'NULL'
+  else
+    par = self.parent.id
+  end
+  db_query("INSERT INTO `animals` SET `id` = " .. self.id .. ", `name` = '" .. self.name .. "', `parent_id` = " .. par)
+end
 
 --- Prepare data for the benchmark.
 --  Is called during the prepare command of sysbench in common.lua.
@@ -51,17 +64,8 @@ CREATE TABLE `animals` (
 )
 ]]
   db_query(query)
-  db_query("INSERT INTO `animals` SET `name` = 'carnivore'")
-  db_query("INSERT INTO `animals` SET `name` = 'feline', `parent_id` = 1")
-  db_query("INSERT INTO `animals` SET `name` = 'cat', `parent_id` = 2")
-  db_query("INSERT INTO `animals` SET `name` = 'big cat', `parent_id` = 2")
-  db_query("INSERT INTO `animals` SET `name` = 'tiger', `parent_id` = 4")
-  db_query("INSERT INTO `animals` SET `name` = 'lion', `parent_id` = 4")
 
-  db_query("INSERT INTO `animals` SET `name` = 'canine', `parent_id` = 1")
-  db_query("INSERT INTO `animals` SET `name` = 'dog', `parent_id` = 7")
-  db_query("INSERT INTO `animals` SET `name` = 'wolf', `parent_id` = 7")
-  db_query("INSERT INTO `animals` SET `name` = 'fox', `parent_id` = 7")
+  prepare_tree()
 
   -- Create ancestor traversal procedure.
   query = [[

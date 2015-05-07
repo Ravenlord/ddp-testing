@@ -33,10 +33,17 @@
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "../common.inc")
+dofile(pathtest .. "prepare.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
 
+
+--- Implement the appropriate insert function.
+-- Is called during tree traversal in prepare_tree().
+function Node:insertPost()
+  db_query("INSERT INTO `animals` SET `id` = " .. self.id .. ", `name` = '" .. self.name .. "', `left` = " .. (self.leftnum * 100) .. ", `right` = " .. (self.rightnum * 100))
+end
 
 --- Prepare data for the benchmark.
 --  Is called during the prepare command of sysbench in common.lua.
@@ -53,17 +60,7 @@ CREATE TABLE `animals` (
 )
 ]]
   db_query(query)
-  db_query("INSERT INTO `animals` SET `name` = 'carnivore', `left` = 100, `right` = 2000")
-  db_query("INSERT INTO `animals` SET `name` = 'feline', `left` = 200, `right` = 1100")
-  db_query("INSERT INTO `animals` SET `name` = 'cat', `left` = 300, `right` = 400")
-  db_query("INSERT INTO `animals` SET `name` = 'big cat', `left` = 500, `right` = 1000")
-  db_query("INSERT INTO `animals` SET `name` = 'tiger', `left` = 600, `right` = 700")
-  db_query("INSERT INTO `animals` SET `name` = 'lion', `left` = 800, `right` = 900")
-
-  db_query("INSERT INTO `animals` SET `name` = 'canine', `left` = 1200, `right` = 1900")
-  db_query("INSERT INTO `animals` SET `name` = 'dog', `left` = 1300, `right` = 1400")
-  db_query("INSERT INTO `animals` SET `name` = 'wolf', `left` = 1500, `right` = 1600")
-  db_query("INSERT INTO `animals` SET `name` = 'fox', `left` = 1700, `right` = 1800")
+  prepare_tree()
 end
 
 
