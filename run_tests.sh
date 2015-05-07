@@ -215,14 +215,11 @@ else
     # This is needed for convenience.
     mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA IF NOT EXISTS ${SCHEMA};"
     echo "Preparing test data"
-    sysbench ${SYSBENCH_OPTIONS}${DIR}provision.lua prepare > /dev/null 2>&1
+    sysbench ${SYSBENCH_OPTIONS}${DIR}provision.prov prepare > /dev/null 2>&1
   fi
 
-  # Iterate tests directory and run tests in all subdirectories.
-  for CURDIR in $(find ${DIR} -type d)
-  do
-    run_tests $(ls ${CURDIR%/}/*.lua)
-  done
+  # Find all test files in the test directory and run them.
+  run_tests $(find ${DIR} -type f -name '*.lua')
 fi
 
 echo "\n${LINE}"
