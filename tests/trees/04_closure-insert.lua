@@ -19,7 +19,8 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Closure Table" solution.
- - Insert intermediate node "four-legged" between "carnivore" and its children.
+ - Insert intermediate node "node-2000" (id 2000) between "node-834" and its children.
+ - (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -87,7 +88,6 @@ CREATE TABLE `tree_paths` (
   db_query(query)
 
   prepare_tree()
-  fail()
 end
 
 
@@ -98,19 +98,19 @@ end
 -- Is called during the run command of sysbench.
 function benchmark()
   db_query('BEGIN')
-  rs = db_query("INSERT INTO `animals` (`id`, `name`) VALUES (11, 'four-legged')")
-  rs = db_query("UPDATE `tree_paths` SET `path_length` = `path_length` + 1 WHERE `ancestor` = 1 AND `descendant` != 1")
+  rs = db_query("INSERT INTO `animals` (`id`, `name`) VALUES (2000, 'node-2000')")
+  rs = db_query("UPDATE `tree_paths` SET `path_length` = `path_length` + 1 WHERE `ancestor` = 834 AND `descendant` != 834")
   rs = db_query([[
 INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-    SELECT `ancestor`, 11, `path_length` + 1
+    SELECT `ancestor`, 2000, `path_length` + 1
     FROM `tree_paths`
-    WHERE `descendant` = 1
+    WHERE `descendant` = 834
   UNION ALL
-    SELECT 11, `descendant`, `path_length` - 1
+    SELECT 2000, `descendant`, `path_length` - 1
     FROM `tree_paths`
-    WHERE `ancestor` = 1 AND `descendant` != 1
+    WHERE `ancestor` = 834 AND `descendant` != 834
   UNION ALL
-    SELECT 11, 11, 0
+    SELECT 2000, 2000, 0
 ]])
   db_query('ROLLBACK')
 end

@@ -19,7 +19,8 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Path Enumeration" solution.
- - Insert intermediate node "four-legged" between "carnivore" and its children.
+ - Insert intermediate node "node-2000" (id 2000) between "node-834" and its children.
+ - (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -69,8 +70,7 @@ end
 -- Is called during the run command of sysbench.
 function benchmark()
   db_query('BEGIN')
-  rs = db_query("INSERT INTO `animals` (`id`, `name`) VALUES (11, 'four-legged')")
-  rs = db_query("UPDATE `animals` SET `path` = '1/11/' WHERE `id` = 11")
-  rs = db_query("UPDATE `animals` SET `path` = REPLACE(`path`, '1/', '1/11/') WHERE `path` LIKE CONCAT('1/', '%/') AND `id` != 11")
+  rs = db_query("INSERT INTO `animals` (`id`, `name`, `path`) VALUES (2000, 'node-2000', '1/513/769/770/834/2000/')")
+  rs = db_query("UPDATE `animals` SET `path` = REPLACE(`path`, '1/513/769/770/834/', '1/513/769/770/834/2000/') WHERE `path` LIKE CONCAT('1/513/769/770/834/', '%/') AND `id` != 2000")
   db_query('ROLLBACK')
 end
