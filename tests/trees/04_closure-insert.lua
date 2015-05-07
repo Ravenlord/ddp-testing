@@ -33,10 +33,31 @@
 pathtest = string.match(test, "(.*/)") or ""
 
 dofile(pathtest .. "../common.inc")
+dofile(pathtest .. "prepare.inc")
 
 
 -- --------------------------------------------------------------------------------------------------------------------- Preparation functions
 
+
+--- Implement the appropriate insert function.
+-- Is called during tree traversal in prepare_tree().
+function Node:insertPre()
+  local query
+  db_query("INSERT INTO `animals` SET `id` = " .. self.id .. ", `name` = '" .. self.name .. "'")
+  if self.parent == nil then
+    db_query('INSERT INTO `tree_paths` SET `ancestor` = ' .. self.id .. ', `descendant` = ' .. self.id .. ', `path_length` = 0')
+  else
+    query = [[
+INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
+  SELECT `ancestor`, ]] .. self.id .. [[, `path_length` + 1
+  FROM `tree_paths`
+  WHERE `descendant` = ]] .. self.parent.id .. [[
+  UNION ALL
+  SELECT ]] .. self.id .. [[, ]] .. self.id .. [[, 0
+]]
+    db_query(query)
+  end
+end
 
 --- Prepare data for the benchmark.
 --  Is called during the prepare command of sysbench in common.lua.
@@ -65,107 +86,8 @@ CREATE TABLE `tree_paths` (
 ]]
   db_query(query)
 
-  db_query("INSERT INTO `animals` SET `name` = 'carnivore'")
-  db_query('INSERT INTO `tree_paths` SET `ancestor` = LAST_INSERT_ID(), `descendant` = LAST_INSERT_ID(), `path_length` = 0')
-
-  db_query("INSERT INTO `animals` SET `name` = 'feline'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 1
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
-
-  db_query("INSERT INTO `animals` SET `name` = 'cat'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 2
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
-
-  db_query("INSERT INTO `animals` SET `name` = 'big cat'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 2
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
-
-  db_query("INSERT INTO `animals` SET `name` = 'tiger'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 4
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
-
-  db_query("INSERT INTO `animals` SET `name` = 'lion'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 4
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
-
-  db_query("INSERT INTO `animals` SET `name` = 'canine'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 1
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
-
-  db_query("INSERT INTO `animals` SET `name` = 'dog'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 7
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
-
-  db_query("INSERT INTO `animals` SET `name` = 'wolf'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 7
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
-
-  db_query("INSERT INTO `animals` SET `name` = 'fox'")
-  query = [[
-INSERT INTO `tree_paths` (`ancestor`, `descendant`, `path_length`)
-  SELECT `ancestor`, LAST_INSERT_ID(), `path_length` + 1
-  FROM `tree_paths`
-  WHERE `descendant` = 7
-  UNION ALL
-  SELECT LAST_INSERT_ID(), LAST_INSERT_ID(), 0
-]]
-  db_query(query)
+  prepare_tree()
+  fail()
 end
 
 
