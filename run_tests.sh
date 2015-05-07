@@ -119,7 +119,7 @@ DIR='tests/'
 # Just a delimiter line for neat output.
 LINE='--------------------------------------------------------------------------------'
 # Number of threads used by sysbench
-NUM_THREADS=8
+NUM_THREADS=4
 # Output directory for log files
 OUTPUT_DIR='results/'
 # Database password for sysbench.
