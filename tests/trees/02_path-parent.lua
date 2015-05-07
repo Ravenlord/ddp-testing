@@ -19,7 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Path Enumeration" solution.
- - Select direct parent of "cat".
+ - Select direct parent of "node-834" (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -42,6 +42,6 @@ dofile(pathtest .. "02_path-insert.lua")
 --- Execute the benchmark queries.
 -- Is called during the run command of sysbench.
 function benchmark()
-  rs = db_query("SELECT `path` FROM `animals` WHERE `id` = 3")
-  rs = db_query("SELECT * FROM `animals` WHERE `id` = 2")
+  rs = db_query("SELECT `path` FROM `animals` WHERE `id` = 834")
+  rs = db_query("SELECT * FROM `animals` WHERE `id` = 770")
 end

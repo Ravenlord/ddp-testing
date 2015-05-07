@@ -19,7 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Nested Sets" solution.
- - Select direct parent of "cat".
+ - Select direct parent of "node-834" (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -50,6 +50,6 @@ FROM `animals` AS `child`
   LEFT JOIN `animals` AS `intermediate`
     ON `child`.`left` > `intermediate`.`left` AND `child`.`left` < `intermediate`.`right`
     AND `intermediate`.`left` > `parent`.`left` AND `intermediate`.`left` < `parent`.`right`
-WHERE `child`.`id` = 3 AND `intermediate`.`id` IS NULL
+WHERE `child`.`id` = 834 AND `intermediate`.`id` IS NULL
 ]])
 end

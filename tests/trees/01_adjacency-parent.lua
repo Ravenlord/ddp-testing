@@ -19,7 +19,7 @@
 
 --[[
  - Benchmark file for design problem "Trees", "Adjacency List" solution.
- - Select direct parent of "cat".
+ - Select direct parent of "node-834" (id: 834, name: node-834, parent: 770, path: 1/513/769/770/834/, lnum: 166300, rnum: 178800, level 5).
  -
  - @author Markus Deutschl <deutschl.markus@gmail.com>
  - @copyright 2014 Markus Deutschl
@@ -46,6 +46,6 @@ function benchmark()
 SELECT `parent`.*
 FROM `animals` AS `child`
   INNER JOIN `animals` AS `parent` ON `child`.`parent_id` = `parent`.`id`
-WHERE `child`.`id` = 3
+WHERE `child`.`id` = 834
 ]])
 end
