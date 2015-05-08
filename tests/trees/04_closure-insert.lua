@@ -82,7 +82,9 @@ CREATE TABLE `tree_paths` (
     ON UPDATE CASCADE,
   CONSTRAINT `fk_tree_descendant` FOREIGN KEY (`descendant`) REFERENCES `animals` (`id`)
     ON DELETE CASCADE
-    ON UPDATE CASCADE
+    ON UPDATE CASCADE,
+  INDEX(`descendant`),
+  INDEX(`path_length`)
 )
 ]]
   db_query(query)
