@@ -60,11 +60,11 @@ schema_test		:= test
 # The database user sysbench will use.
 sysbench_db_user	:= root
 # Number of threads for the benchmark.
-sysbench_threads	:= 8
+sysbench_threads	:= 4
 # Maximum number of requests performed by sysbench (0 = unlimited).
 sysbench_max_requests	:= 0
 # Maximum amount of time a single benchmark will run (seconds).
-sysbench_max_time	:= 1
+sysbench_max_time	:= 30
 
 # ------------------------------------------------------------------------------
 # Targets
