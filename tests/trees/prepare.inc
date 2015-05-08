@@ -26,18 +26,37 @@
  - @license http://unlicense.org/ Unlicense
 --]]
 
+-- Global iterator for node identifier values.
 idIt = 1
+
+-- Global iterator for depth-first tree traversal.
 travIt = 1
+
+-- Node class representing binary tree nodes.
 Node = {
+  -- The node's identifier.
   id = nil,
+  -- The node's left child.
   lnode = nil,
+  -- The node's right child.
   rnode = nil,
+  -- The node's left number assigned during depth-first traversal.
   leftnum = nil,
+  -- The node's right number assigned during depth-first traversal.
   rightnum = nil,
+  -- The node's path from the root, separated by slashes.
   path = nil,
-  level = 0
+  -- The node's level.
+  level = 0,
+  -- The node's parent node.
+  parent = nil,
+  -- The node's name.
+  name = nil
 }
 Node.__index = Node
+
+--- Node constructor.
+-- Returns a new node.
 function Node:new(id, leftnum, path, level, parent, o)
   local o = {
     id = nil,
@@ -60,34 +79,54 @@ function Node:new(id, leftnum, path, level, parent, o)
   return o
 end
 
+--- Create and traverse a complete binary tree.
+-- maxlevel determines the height of the tree.
 function Node:createTree(maxlevel)
+  -- Call the pre-traversal insert hook, used for most tree patterns.
   self:insertPre()
+
   if self.level < maxlevel then
+    -- Create a new left child and its subtree recursively.
     idIt =  idIt + 1
     travIt = travIt + 1
     self.lnode = Node:new(idIt, travIt, self.path .. idIt .. '/', self.level + 1, self, nil)
     self.lnode:createTree(maxlevel)
 
+    -- Create a new right child and its subtree recursively.
     idIt =  idIt + 1
     travIt = travIt + 1
     self.rnode = Node:new(idIt, travIt, self.path .. idIt .. '/', self.level + 1, self, nil)
     self.rnode:createTree(maxlevel)
   end
+
+  -- Assign the right traversal number, since the traversal goes upwards again.
   travIt = travIt + 1
   self.rightnum = travIt
+
+  -- Call the post-traversal insert hook, used only for Nested Sets at this point.
   self:insertPost()
 end
 
+--- Pre-traversal insert hook for nodes.
 function Node:insertPre()
+  -- Dummy implementation.
 end
 
+--- Post-traversal insert hook for nodes.
 function Node:insertPost()
+  -- Dummy implementation.
 end
 
+--- Prepare tree test data.
+-- Please note: Pre- or post-traversal insert hooks have to be implemented to actually insert nodes.
 function prepare_tree()
-  local treedepth = 10
+  -- Configure tree height here, since it should be the same for all tests.
+  local treeheight = 10
+  -- Create root node manually.
   local root = Node:new(1, 1, 1 .. '/', 1)
+
+  -- Create tree within a transaction to make operation atomic.
   db_query('BEGIN')
-  root:createTree(treedepth)
+  root:createTree(treeheight)
   db_query('COMMIT')
 end
