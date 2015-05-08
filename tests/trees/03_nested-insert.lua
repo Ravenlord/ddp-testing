@@ -72,6 +72,10 @@ end
 -- Is called during the run command of sysbench.
 function benchmark()
   db_query('BEGIN')
-  rs = db_query("INSERT INTO `animals` (`id`, `name`, `left`, `right`) VALUES (2000, 'node-2000', 166350, 178750)")
+  rs = db_query([[
+INSERT INTO `animals` (`id`, `name`, `left`, `right`)
+ SELECT 2000, 'node-2000', (166300 + MIN(`left`)) / 2, (178800 + MAX(`right`)) / 2
+ FROM `animals` WHERE `left` > 166300 AND `left` < 178800
+]])
   db_query('ROLLBACK')
 end
