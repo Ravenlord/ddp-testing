@@ -50,6 +50,6 @@ FROM `animals` AS `a1`
   LEFT JOIN `animals` AS `a4` ON `a3`.`id` = `a4`.`parent_id`
   LEFT JOIN `animals` AS `a5` ON `a4`.`id` = `a5`.`parent_id`
   LEFT JOIN `animals` AS `a6` ON `a5`.`id` = `a6`.`parent_id`
-WHERE `a1`.`id` = 2
+WHERE `a1`.`id` = 834
 ]])
 end
