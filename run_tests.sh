@@ -91,7 +91,7 @@ Options:
 -d Directory containing the test files, defaults to 'tests/'.
    Files named 'common.lua' are considered shared common properties
    for tests and are not executed.
-   If a file named 'provision.lua' exists, it will be used to create the
+   If a file named 'provision.prov' exists, it will be used to create the
    prerequisites of the test suite with an additional prepare command.
 -n The number of threads sysbench will use, defaults to 4.
 -o Output directory for benchmark logs, defaults to 'results/'.
@@ -208,7 +208,7 @@ else
 
   # Check if test suite provisioning file exists and execute the data preparation step.
   if [  -f "${DIR}provision.prov" ]; then
-    echo "Found provisioning file 'provision.lua', starting test suite preparations."
+    echo "Found provisioning file 'provision.prov', starting test suite preparations."
     echo "Creating test data schema: ${SCHEMA_DATA}"
     mysql ${MYSQL_USER}${MYSQL_PASS} -e "DROP SCHEMA IF EXISTS ${SCHEMA_DATA};"
     mysql ${MYSQL_USER}${MYSQL_PASS} -e "CREATE SCHEMA ${SCHEMA_DATA};"
